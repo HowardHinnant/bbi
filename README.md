@@ -2,11 +2,11 @@
 
 ## Overview
 
-The purpose of this header-only, C++20 library is to provide integral arithmetic
+The purpose of this header-only C++20 library is to provide integral arithmetic
 without undefined behavior. Additionally some of the more irritating behavior of
 C and C++ integers is made a little more civilized.
 
-For example there is no integer promotion. That is, the sum of two 8 bit
+For example, there is no integer promotion. That is, the sum of two 8 bit
 integers is an 8 bit integer. And all implicit conversions are value-preserving.
 Explicit conversions are supplied for conversions that are not value-preserving.
 And comparisons between signed and unsigned types always give the right answer.
@@ -91,7 +91,7 @@ and your patience for performance), and `Policy` is one of `bbi::Wrap`,
 `bbi::Saturate`, `bbi::Terminate`, or `bbi::Throw`.
 
 Each Policy behaves just like the built-in integral types, except no integral
-promotion, and except when overflow occurs.  Then the policy dictates what the
+promotion, and except when overflow occurs. Then the policy dictates what the
 overflow behavior should be.
 
 ### wrap
@@ -127,8 +127,8 @@ with infinite precision but then truncated back into 8 bits (10,000 % 128).
 
 ### sat
 
-On overflow saturate to either the minimum or maximum representable value, which
-ever is the closest to the exact answer.
+On overflow saturate to either the minimum or maximum representable value, whichever
+is the closest to the exact answer.
 
 _Example:_
 
