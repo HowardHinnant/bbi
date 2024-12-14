@@ -1,5 +1,5 @@
-#ifndef BBI_XINT_H
-#define BBI_XINT_H
+#ifndef BBI_H
+#define BBI_H
 
 // The MIT License (MIT)
 //
@@ -3175,4 +3175,4 @@ public:
 
 }  // namespace std
 
-#endif  // BBI_XINT_H
+#endif  // BBI_H
