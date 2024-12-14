@@ -6,7 +6,7 @@ The purpose of this header-only C++20 library is to provide integral arithmetic
 without undefined behavior. Additionally some of the more irritating behavior of
 C and C++ integers is made a little more civilized.
 
-For example, there is no integer promotion. That is, the sum of two 8 bit
+For example, there is no integer promotion—that is, the sum of two 8 bit
 integers is an 8 bit integer. And all implicit conversions are value-preserving.
 Explicit conversions are supplied for conversions that are not value-preserving.
 And comparisons between signed and unsigned types always give the right answer.
@@ -261,19 +261,19 @@ truncate to the minimum or maximum if the result is out of range.  For example i
 type is unsigned, the result is always 0.  And if the type is signed and the value is
 the minimum, the result is the maximum.
 
-In the `thrw` and `term` modes will negate as if a signed infinite precision type and then
-if the result is out of range, throw or terminate respectively.  For example if the type
-is unsigned negating any value but 0 will throw or terminate.  And if the type is
+In the `thrw` and `term` modes this operation will negate as if a signed infinite precision type and then
+if the result is out of range, throw or terminate respectively.  For example, if the type
+is unsigned, negating any value but 0 will throw or terminate.  And if the type is
 signed, negating the minimum value will throw or terminate.
 
 ## Conversions
 
 ### Explicit conversions
 
-All bbi integral types, signed and unsigned, any bit width, and any Policy, can
+All bbi integral types (signed and unsigned, any bit width, and any Policy) can
 be explicitly converted to one another, and to/from C++ integral types. Except
 that if the destination has a Throw or Terminate Policy, and if the run-time value
-of the source can not be preserved, then an exception is thrown, or `terminate` is called.
+of the source can not be preserved, then an exception is thrown or `terminate` is called.
 
 _Example:_
 
@@ -396,7 +396,7 @@ integral type with the same Policy as the other operand.
 
 ## Comparisons
 
-bbi integral types support all 6 comparison operators. And as long as the two
+bbi integral types support all 6 comparison operators, and as long as the two
 operands have the same Policy, two different bbi types can be compared. The
 operation will continue by converting both to their `common_type` and continuing
 as normal.  Note that this means that comparisons **always** give the correct
