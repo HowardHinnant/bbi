@@ -46,11 +46,7 @@ namespace bbi
 
 // Change this to 16 on 16 bit architectures, to 32 on 32 bit architectures, etc.
 #ifndef BBI_LIMIT
-#  ifndef _MSC_VER
-#    define BBI_LIMIT 128
-#  else
-#    define BBI_LIMIT 64
-#  endif
+#  define BBI_LIMIT 64
 #endif
 
 unsigned constexpr Nlimit = BBI_LIMIT;
@@ -104,6 +100,8 @@ template <> inline std::string to_string<std::int8_t >()  {return "int8_t";}
 template <> inline std::string to_string<std::int16_t>()  {return "int16_t";}
 template <> inline std::string to_string<std::int32_t>()  {return "int32_t";}
 template <> inline std::string to_string<std::int64_t>()  {return "int64_t";}
+
+static_assert(CHAR_BIT == 8);
 
 // N must be a power of 2 that is 8 or larger.
 // The upper limit is dictated by compiler limits or the size of unsigned.
