@@ -247,8 +247,8 @@ _Note:_ Integral promotion to `int` occurred.  Note that in the other modes,
 
 ### Arithmetic Summary
 
-The above examples all used the same type for both operands.  When the operaands
-are of different types, but have the same Policy, they can be added as if both
+The above examples all used the same type for both operands.  When the operands
+are of different types, but have the same Policy, they can be operated on as if both
 operands are first brought to a common type using `std::common_type`.
 
 ## Unary negation
