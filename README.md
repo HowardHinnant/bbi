@@ -7,9 +7,9 @@ without undefined behavior. Additionally some of the more irritating behavior of
 C and C++ integers is made a little more civilized.
 
 For example, there is no integer promotion—that is, the sum of two 8 bit
-integers is an 8 bit integer. And all implicit conversions are value-preserving.
-Explicit conversions are supplied for conversions that are not value-preserving.
-And comparisons between signed and unsigned types always give the right answer.
+integers is an 8 bit integer—and all implicit conversions are value-preserving.
+Explicit conversions are supplied for conversions that are not value-preserving,
+and comparisons between signed and unsigned types always give the right answer.
 Finally, if you need an integer with twice the bit width of the one you\'re
 using, this library provides it.
 
@@ -90,8 +90,8 @@ Where `SignTag` can be `bbi::Signed` or `bbi::Unsigned`, `N` can be any power of
 and your patience for performance), and `Policy` is one of `bbi::Wrap`,
 `bbi::Saturate`, `bbi::Terminate`, or `bbi::Throw`.
 
-Each Policy behaves just like the built-in integral types, except no integral
-promotion, and except when overflow occurs. Then the policy dictates what the
+Each Policy behaves just like the built-in integral types, except that there is no integral
+promotion and there is no undefined behavior when overflow occurs: the policy dictates what the
 overflow behavior should be.
 
 ### wrap
@@ -271,8 +271,8 @@ signed, negating the minimum value will throw or terminate.
 ### Explicit conversions
 
 All bbi integral types (signed and unsigned, any bit width, and any Policy) can
-be explicitly converted to one another, and to/from C++ integral types. Except
-that if the destination has a Throw or Terminate Policy, and if the run-time value
+be explicitly converted to one another, and to/from C++ integral types.
+However, if the destination has a Throw or Terminate Policy, and if the run-time value
 of the source can not be preserved, then an exception is thrown or `terminate` is called.
 
 _Example:_
@@ -389,8 +389,8 @@ _Examples:_
 ## Mixed mode arithmetic
 
 If two different bbi types appear in an arithmetic operation, as long as they
-have the same Policy, the operation will continue by converting both to their
-`common_type` and continuing as normal.  If one of the operands is a built-in
+have the same Policy the operation will proceed normally after converting both to their
+`common_type`.  If one of the operands is a built-in
 integral type, it will first be converted to the integral\'s equivalent bbi
 integral type with the same Policy as the other operand.
 
@@ -398,8 +398,8 @@ integral type with the same Policy as the other operand.
 
 bbi integral types support all 6 comparison operators, and as long as the two
 operands have the same Policy, two different bbi types can be compared. The
-operation will continue by converting both to their `common_type` and continuing
-as normal.  Note that this means that comparisons **always** give the correct
+operation will proceed normally after converting both to their `common_type`.
+Note that this means that comparisons **always** give the correct
 result, unlike in C and C++ when comparing signed and unsigned types.  For
 example a signed type with a negative value will _always_ compare less than an
 unsigned type, no matter the bit width of either operand. Comparisons with
