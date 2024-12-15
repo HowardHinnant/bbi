@@ -196,12 +196,6 @@ concept ImplicitConvertFrom = StandardInteger<I> &&
 
 }  // namespace detail
 
-// template <SignTag S2, unsigned N2>
-// constexpr
-// auto
-// operator-(Z<S2, N2, Wrap> const& x, Z<S2, N2, Wrap> const& y) noexcept
-//     -> Z<S2, N2, Wrap>;
-
 template <SignTag S, unsigned N, Policy P>
 requires (N <= Nlimit)
 std::string
