@@ -1,6 +1,8 @@
 #ifndef BBI_H
 #define BBI_H
 
+// https://github.com/HowardHinnant/bbi
+
 // The MIT License (MIT)
 //
 // Copyright (c) 2024 Howard Hinnant
