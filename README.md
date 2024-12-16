@@ -6,8 +6,8 @@ The purpose of this header-only C++20 library is to provide integral arithmetic
 without undefined behavior. Additionally some of the more irritating behavior of
 C and C++ integers is made a little more civilized.
 
-For example, there is no integer promotion—that is, the sum of two 8 bit
-integers is an 8 bit integer—and all implicit conversions are value-preserving.
+For example, there is no integer promotionâ€”that is, the sum of two 8 bit
+integers is an 8 bit integerâ€”and all implicit conversions are value-preserving.
 Explicit conversions are supplied for conversions that are not value-preserving,
 and comparisons between signed and unsigned types always give the right answer.
 Finally, if you need an integer with twice the bit width of the one you\'re
@@ -213,9 +213,9 @@ libc++abi: terminating
 
 ### raw
 
-The bbi integral types alias the corresponding built-in types such as
+The bbi integral types alias the corresponding standard integral types such as
 `std::int8_t`. This allows one to easily switch between using this library for
-debugging and testing, and using the built-in types for release code.
+debugging and testing, and using the standard integral types for release code.
 
 The following types don\'t exist in this namespace: `i128`, `i256`, `i512`, `i1024`,
 `u128`, `u256`, `u512`, and `u1024`.
@@ -390,7 +390,7 @@ _Examples:_
 
 If two different bbi types appear in an arithmetic operation, as long as they
 have the same Policy the operation will proceed normally after converting both to their
-`common_type`.  If one of the operands is a built-in
+`common_type`.  If one of the operands is a standard
 integral type, it will first be converted to the integral\'s equivalent bbi
 integral type with the same Policy as the other operand.
 
@@ -403,7 +403,7 @@ Note that this means that comparisons **always** give the correct
 result, unlike in C and C++ when comparing signed and unsigned types.  For
 example a signed type with a negative value will _always_ compare less than an
 unsigned type, no matter the bit width of either operand. Comparisons with
-built-in integral types are also allowed and proceed as if the built-in integral
+standard integral types are also allowed and proceed as if the standard integral
 type is converted to the equivalent bbi integral type with the same Policy as
 the other operand.
 
