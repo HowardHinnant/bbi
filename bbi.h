@@ -1656,7 +1656,7 @@ operator<<(Z<S, N, Saturate> const& x, int n) noexcept
     using X = Z<S, N, Saturate>;
     if (n < 0)
         return x >> -n;
-    if (n >= N)
+    if (static_cast<unsigned>(n) >= N)
         return X{};
     return x.left_shift(unsigned(n));
 }
@@ -1670,7 +1670,7 @@ operator>>(Z<S, N, Saturate> const& x, int n) noexcept
     using X = Z<S, N, Saturate>;
     if (n < 0)
         return x << -n;
-    if (n >= N)
+    if (static_cast<unsigned>(n) >= N)
     {
         if (x.is_neg())
         {
@@ -1693,7 +1693,7 @@ Z<S, N, P>
 operator<<(Z<S, N, P> const& x, int n) noexcept(P{} == Terminate{})
 {
     using X = Z<S, N, P>;
-    if (n < 0 || n >= N)
+    if (n < 0 || static_cast<unsigned>(n) >= N)
     {
         auto const msg = to_string<X>() + '{' + to_string(x) + "} << " +
                          std::to_string(n) + " overflowed";
@@ -1715,7 +1715,7 @@ Z<S, N, P>
 operator>>(Z<S, N, P> const& x, int n) noexcept(P{} == Terminate{})
 {
     using X = Z<S, N, P>;
-    if (n < 0 || n >= N)
+    if (n < 0 || static_cast<unsigned>(n) >= N)
     {
         auto const msg = to_string<X>() + '{' + to_string(x) + "} >> " +
                          std::to_string(n) + " overflowed";

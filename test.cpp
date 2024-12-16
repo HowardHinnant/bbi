@@ -2418,7 +2418,7 @@ test_leftshift()
                                 if (j < 0)
                                 {
                                     // i1 = i0 >> -j;  // but saturated
-                                    if (-j >= N)
+                                    if (-j >= static_cast<I>(N))
                                     {
                                         if (z < Z{})
                                             i1 = ~i1;
@@ -2428,7 +2428,7 @@ test_leftshift()
                                     else
                                         i1 = i0 >> -j;
                                 }
-                                else if (j >= N)
+                                else if (j >= static_cast<I>(N))
                                 {
                                     i1 = 0;
                                 }
@@ -2439,7 +2439,7 @@ test_leftshift()
                             }
                             else if constexpr (P{} == bbi::Throw{})
                             {
-                                if (j < 0 || j >= N)
+                                if (j < 0 || j >= static_cast<I>(N))
                                 {
                                     std::cout << bbi::to_string<Z>() << "{" << i << "} << "
                                               << j+0
@@ -2462,7 +2462,7 @@ test_leftshift()
                         {
                             if constexpr (P{} == bbi::Throw{})
                             {
-                                if (0 <= j && j < N)
+                                if (0 <= j && j < static_cast<I>(N))
                                 {
                                     std::cout << bbi::to_string<Z>() << "{" << i << "} + "
                                               << j+0
@@ -2560,7 +2560,7 @@ test_rightshift()
                                 if (j < 0)
                                 {
                                     // i1 = i0 >> -j;  // but saturated
-                                    if (-j >= N)
+                                    if (-j >= static_cast<I>(N))
                                     {
                                         if (z < Z{})
                                             i1 = ~i1;
@@ -2570,7 +2570,7 @@ test_rightshift()
                                     else
                                         i1 = i0 >> -j;
                                 }
-                                else if (j >= N)
+                                else if (j >= static_cast<I>(N))
                                 {
                                     i1 = 0;
                                 }
@@ -2581,7 +2581,7 @@ test_rightshift()
                             }
                             else if constexpr (P{} == bbi::Throw{})
                             {
-                                if (j < 0 || j >= N)
+                                if (j < 0 || j >= static_cast<I>(N))
                                 {
                                     std::cout << bbi::to_string<Z>() << "{" << i << "} << "
                                               << j+0
@@ -2604,7 +2604,7 @@ test_rightshift()
                         {
                             if constexpr (P{} == bbi::Throw{})
                             {
-                                if (0 <= j && j < N)
+                                if (0 <= j && j < static_cast<I>(N))
                                 {
                                     std::cout << bbi::to_string<Z>() << "{" << i << "} + "
                                               << j+0
