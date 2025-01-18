@@ -1106,6 +1106,22 @@ private:
 namespace detail
 {
 
+template <SignTag S, unsigned N, ErrorCheckedPolicy P, std::integral I>
+void
+conversion_overflowed(Z<S, N, P> const&, I const& y) noexcept (P{} != Throw{})
+{
+    using R = Z<S, N, P>;
+    auto const msg = to_string<R>() + '{' + to_string<I>() +
+                     '{' + std::to_string(y) + "}} overflowed";
+    if constexpr (P{} == Throw{})
+        throw std::overflow_error(msg);
+    else
+    {
+        std::cerr << msg << '\n';
+        std::terminate();
+    }
+}
+
 template <SignTag S, unsigned N, Policy P, std::integral I>
 inline
 constexpr
@@ -1185,17 +1201,7 @@ check(Z<S, N, P>& r, I i) noexcept (P{} != Throw{})
                 auto constexpr m = I{std::numeric_limits<R>::min()};
                 auto constexpr M = I{std::numeric_limits<R>::max()};
                 if (i < m || i > M)
-                {
-                    auto const msg = to_string<R>() + '{' + to_string<I>() +
-                                     '{' + std::to_string(i) + "}} overflowed";
-                    if constexpr (P{} == Throw{})
-                        throw std::overflow_error(msg);
-                    else
-                    {
-                        std::cerr << msg << '\n';
-                        std::terminate();
-                    }
-                }
+                    conversion_overflowed(R{}, i);
                 return;
             }
         }
@@ -1206,17 +1212,7 @@ check(Z<S, N, P>& r, I i) noexcept (P{} != Throw{})
             {
                 // R is unsigned, I is signed
                 if (i < 0)
-                {
-                    auto const msg = to_string<R>() + '{' + to_string<I>() +
-                                     '{' + std::to_string(i) + "}} overflowed";
-                    if constexpr (P{} == Throw{})
-                        throw std::overflow_error(msg);
-                    else
-                    {
-                        std::cerr << msg << '\n';
-                        std::terminate();
-                    }
-                }
+                    conversion_overflowed(R{}, i);
             }
             if constexpr (std::numeric_limits<R>::digits >
                           std::numeric_limits<I>::digits)
@@ -1228,20 +1224,29 @@ check(Z<S, N, P>& r, I i) noexcept (P{} != Throw{})
                 // I can hold a superset of the values of R but i is non-negative
                 auto constexpr M = I{std::numeric_limits<R>::max()};
                 if (i > M)
-                {
-                    auto const msg = to_string<R>() + '{' + to_string<I>() +
-                                     '{' + std::to_string(i) + "}} overflowed";
-                    if constexpr (P{} == Throw{})
-                        throw std::overflow_error(msg);
-                    else
-                    {
-                        std::cerr << msg << '\n';
-                        std::terminate();
-                    }
-                }
+                    conversion_overflowed(R{}, i);
                 return;
             }
         }
+    }
+}
+
+template <SignTag S1, unsigned N1, ErrorCheckedPolicy P1,
+          SignTag S2, unsigned N2, Policy P2>
+void
+conversion_overflowed(Z<S1, N1, P1> const&, Z<S2, N2, P2> const& y)
+    noexcept (P1{} != Throw{})
+{
+    using R = Z<S1, N1, P1>;
+    using Y = Z<S2, N2, P2>;
+    auto const msg = to_string<R>() + '{' + to_string<Y>() +
+                     '{' + to_string(y) + "}} overflowed";
+    if constexpr (P1{} == Throw{})
+        throw std::overflow_error(msg);
+     else
+    {
+        std::cerr << msg << '\n';
+        std::terminate();
     }
 }
 
@@ -1317,8 +1322,8 @@ check(Z<S1, N1, P1>& r, Z<S2, N2, P2> const& x) noexcept (P1{} != Throw{})
     }
     else if constexpr (ErrorCheckedPolicy<P1>)
     {
+        using R = Z<S1, N1, P1>;
         using RW = Z<S1, N1, Wrap>;
-        using X  = Z<S2, N2, P2>;
         using XW = Z<S2, N2, Wrap>;
         auto constexpr m = XW{std::numeric_limits<RW>::min()};
         auto constexpr M = XW{std::numeric_limits<RW>::max()};
@@ -1336,17 +1341,7 @@ check(Z<S1, N1, P1>& r, Z<S2, N2, P2> const& x) noexcept (P1{} != Throw{})
                 using R = Z<S1, N1, P1>;
                 XW xw{x};
                 if (xw < m || xw > M)
-                {
-                    auto const msg = to_string<R>() + '{' + to_string<X>() +
-                                     '{' + to_string(x) + "}} overflowed";
-                    if constexpr (P1{} == Throw{})
-                        throw std::overflow_error(msg);
-                    else
-                    {
-                        std::cerr << msg << '\n';
-                        std::terminate();
-                    }
-                }
+                    conversion_overflowed(R{}, x);
                 return;
             }
         }
@@ -1357,18 +1352,7 @@ check(Z<S1, N1, P1>& r, Z<S2, N2, P2> const& x) noexcept (P1{} != Throw{})
             {
                 // R is unsigned, X is signed
                 if (x.is_neg())
-                {
-                    using R = Z<S1, N1, P1>;
-                    auto const msg = to_string<R>() + '{' + to_string<X>() +
-                                     '{' + to_string(x) + "}} overflowed";
-                    if constexpr (P1{} == Throw{})
-                        throw std::overflow_error(msg);
-                    else
-                    {
-                        std::cerr << msg << '\n';
-                        std::terminate();
-                    }
-                }
+                    conversion_overflowed(R{}, x);
             }
             if constexpr (std::numeric_limits<RW>::digits >
                           std::numeric_limits<XW>::digits)
@@ -1379,19 +1363,8 @@ check(Z<S1, N1, P1>& r, Z<S2, N2, P2> const& x) noexcept (P1{} != Throw{})
             {
                 // X can hold a superset of the values of R but x is non-negative
                 XW xw{x};
-                using R = Z<S1, N1, P1>;
                 if (xw > M)
-                {
-                    auto const msg = to_string<R>() + '{' + to_string<X>() +
-                                     '{' + to_string(x) + "}} overflowed";
-                    if constexpr (P1{} == Throw{})
-                        throw std::overflow_error(msg);
-                     else
-                    {
-                        std::cerr << msg << '\n';
-                        std::terminate();
-                    }
-                }
+                    conversion_overflowed(R{}, x);
                return;
             }
         }
