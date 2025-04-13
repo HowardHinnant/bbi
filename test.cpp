@@ -3261,6 +3261,8 @@ test_div()
                     I i1{};
                     if (iy != 0)
                         i1 = ix / iy;
+                    else if constexpr (P{} == bbi::Wrap{})
+                        goto next;
                     try
                     {
                         auto z1 = zx / zy;

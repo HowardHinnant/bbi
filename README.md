@@ -3,8 +3,8 @@
 ## Overview
 
 The purpose of this header-only C++20 library is to provide integral arithmetic
-without undefined behavior. Additionally some of the more irritating behavior of
-C and C++ integers is made a little more civilized.
+with greatly reduced undefined behavior. Additionally some of the more
+irritating behavior of C and C++ integers is made a little more civilized.
 
 For example, there is no integer promotion—that is, the sum of two 8 bit
 integers is an 8 bit integer—and all implicit conversions are value-preserving.
@@ -124,6 +124,9 @@ Output:
 
 _Note:_ `i8` is a numeric type, not a character type. This is 100*100 computed
 with infinite precision but then truncated back into 8 bits (10,000 % 128).
+
+_Note:_ Division by zero, and mod 0 when using `wrap` remains undefined behavior.
+However in other modes this behavior is defined (to saturate, throw or terminate).
 
 ### sat
 
