@@ -299,12 +299,12 @@ public:
     constexpr Z operator+() noexcept {return *this;}
     constexpr Z& operator++() noexcept(policy{} != Throw{})
         {*this += Z{1}; return *this;}
-    constexpr Z& operator++(int) noexcept(policy{} != Throw{})
+    constexpr Z operator++(int) noexcept(policy{} != Throw{})
         {auto t(*this); ++(*this); return t;}
 
     constexpr Z& operator--() noexcept(policy{} != Throw{})
         {*this -= Z{1}; return *this;}
-    constexpr Z& operator--(int) noexcept(policy{} != Throw{})
+    constexpr Z operator--(int) noexcept(policy{} != Throw{})
         {auto t(*this); --(*this); return t;}
 
     constexpr Z& operator+=(Z const& x) noexcept(policy{} != Throw{})
@@ -745,12 +745,12 @@ public:
     constexpr Z operator+() noexcept {return *this;}
     constexpr Z& operator++() noexcept(policy{} != Throw{})
         {*this += Z{1}; return *this;}
-    constexpr Z& operator++(int) noexcept(policy{} != Throw{})
+    constexpr Z operator++(int) noexcept(policy{} != Throw{})
         {auto t(*this); ++(*this); return t;}
 
     constexpr Z& operator--() noexcept(policy{} != Throw{})
         {*this -= Z{1}; return *this;}
-    constexpr Z& operator--(int) noexcept(policy{} != Throw{})
+    constexpr Z operator--(int) noexcept(policy{} != Throw{})
         {auto t(*this); --(*this); return t;}
 
     constexpr Z& operator+=(Z const& x) noexcept(policy{} != Throw{})
