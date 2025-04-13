@@ -2417,6 +2417,8 @@ test_leftshift()
                             {
                                 if (j < 0)
                                 {
+                                    if (j == std::numeric_limits<I>::min())
+                                        ++j;
                                     // i1 = i0 >> -j;  // but saturated
                                     if (-j >= static_cast<I>(N))
                                     {
@@ -2559,6 +2561,8 @@ test_rightshift()
                             {
                                 if (j < 0)
                                 {
+                                    if (j == std::numeric_limits<I>::min())
+                                        ++j;
                                     // i1 = i0 >> -j;  // but saturated
                                     if (-j >= static_cast<I>(N))
                                     {

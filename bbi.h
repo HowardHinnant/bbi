@@ -1628,7 +1628,11 @@ operator<<(Z<S, N, Saturate> const& x, int n) noexcept
 {
     using X = Z<S, N, Saturate>;
     if (n < 0)
+    {
+        if (n == std::numeric_limits<int>::min())
+            ++n;
         return x >> -n;
+    }
     if (static_cast<unsigned>(n) >= N)
         return X{};
     return x.left_shift(unsigned(n));
@@ -1642,7 +1646,11 @@ operator>>(Z<S, N, Saturate> const& x, int n) noexcept
 {
     using X = Z<S, N, Saturate>;
     if (n < 0)
+    {
+        if (n == std::numeric_limits<int>::min())
+            ++n;
         return x << -n;
+    }
     if (static_cast<unsigned>(n) >= N)
     {
         if (x.is_neg())
