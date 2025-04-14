@@ -158,6 +158,11 @@ Output:
 _Note:_ This is 100*100 computed with infinite precision but then truncated back
 to the closet representable value in `i8`.
 
+_Note:_ Division by zero saturates to either the minimum or maximum value,
+depending on sign.  Mod (`operator%`) by zero is an expensive no-op in this
+mode.  The modulus `x % y` is computed by `x - x/y*y`.  When `y` is 0 the
+second term is `0`, and the result is `x`.
+
 ### thrw
 
 On overflow throw a `std::overflow_error`.
