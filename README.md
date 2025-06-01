@@ -489,6 +489,28 @@ This operation only works when both operands have identical bbi types.  Each
 pair of bits is bitwise exclusive or\'ed into a copy and returned.  The Policy
 has no impact on the behavior of this operation.
 
+## Quotient / Remainder algorithms
+
+There are three namespace scope functions that can take two signed bbi integers with
+the same policy and return the quotient and remainder in a `bbi::div_t`.  These
+functions support _truncated_ division, _floored_ division, and _Euclidean_ division
+as described [here](https://en.wikipedia.org/wiki/Modulo).  The function names are
+`trunc_div`, `floor_div` and `euc_div`.
+
+The remainder of all three functions follows the invariant that `r == n - q*d`.
+For Euclidean division, the remainder is always non-negative.
+
+The only failure mode for these functions is division by 0 for `wrap`, `thrw` and
+`term` modes, and division of the minimum value by -1 for `thrw` and `term` modes.
+
+_Example:_
+
+```c++
+i8 n{-128};
+i8 d{127};
+auto [q, r] = euc_div(n, d);  // {-2, 126}
+```
+
 ## Requirements
 
 Requires C++20 and:

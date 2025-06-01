@@ -3045,6 +3045,84 @@ using i1024 = Z<Signed, 1024, Terminate>;
 
 }  // namespace term
 
+template <unsigned N, Policy P>
+struct div_t
+{
+    Z<Signed, N, P> quot;
+    Z<Signed, N, P> rem;
+};
+
+template <unsigned N, Policy P>
+auto
+constexpr
+operator==(div_t<N, P> const& x, div_t<N, P> const& y) noexcept
+{
+    return x.quot == y.quot && x.rem == y.rem;
+}
+
+template <unsigned N, Policy P>
+auto
+constexpr
+operator!=(div_t<N, P> const& x, div_t<N, P> const& y) noexcept
+{
+    return !(x == y);
+}
+
+template <unsigned N, Policy P>
+std::ostream&
+operator<<(std::ostream& os, div_t<N, P> const& x)
+{
+    return os << '{' << x.quot << ", " << x.rem << '}';
+}
+
+template <unsigned N1, unsigned N2, Policy P>
+inline
+constexpr
+auto
+trunc_div(Z<Signed, N1, P> const& n, Z<Signed, N2, P> const& d) noexcept(P{} != Throw{})
+{
+    auto const q = n/d;
+    using R = decltype(q);
+    using RW = Z<Signed, R::size, Wrap>;
+    return div_t{q, R{RW{n} - RW{q}*RW{d}}};
+}
+
+template <unsigned N1, unsigned N2, Policy P>
+inline
+constexpr
+auto
+floor_div(Z<Signed, N1, P> const& n, Z<Signed, N2, P> const& d) noexcept(P{} != Throw{})
+{
+    auto const np = n >= 0;
+    auto const dp = d >= 0;
+    if (np == dp)
+        return trunc_div(n, d);
+    std::int8_t constexpr one{1};
+    using R = decltype(n/d);
+    using RW = Z<Signed, R::size, Wrap>;
+    using R2W = Z<Signed, 2*R::size, Wrap>;
+    R const q{np ? (R2W{n} - (R2W{d}+one)) / R2W{d} : (R2W{n} - (R2W{d}-one)) / R2W{d}};
+    return div_t{q, R{RW{n} - RW{q}*RW{d}}};
+}
+
+template <unsigned N1, unsigned N2, Policy P>
+inline
+constexpr
+auto
+euc_div(Z<Signed, N1, P> const& n, Z<Signed, N2, P> const& d) noexcept(P{} != Throw{})
+{
+    auto const np = n >= 0;
+    auto const dp = d >= 0;
+    if (np)
+        return trunc_div(n, d);
+    std::int8_t constexpr one{1};
+    using R = decltype(n/d);
+    using RW = Z<Signed, R::size, Wrap>;
+    using R2W = Z<Signed, 2*R::size, Wrap>;
+    R const q{dp ? (R2W{n} + (one-R2W{d})) / R2W{d} : (R2W{n} + (R2W{d}+one)) / R2W{d}};
+    return div_t{q, R{RW{n} - RW{q}*RW{d}}};
+}
+
 }  // namespace bbi
 
 namespace std
