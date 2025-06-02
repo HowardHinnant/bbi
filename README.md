@@ -491,13 +491,13 @@ has no impact on the behavior of this operation.
 
 ## Quotient / Remainder algorithms
 
-There are three namespace scope functions that can take two signed bbi integers with
+There are four namespace scope functions that can take two signed bbi integers with
 the same policy and return the quotient and remainder in a `bbi::div_t`.  These
-functions support _truncated_ division, _floored_ division, and _Euclidean_ division
-as described [here](https://en.wikipedia.org/wiki/Modulo).  The function names are
-`trunc_div`, `floor_div` and `euc_div`.
+functions support _truncated_ division, _floored_ division, _ceiling_ division,
+and _Euclidean_ division as described [here](https://en.wikipedia.org/wiki/Modulo).
+ The function names are `trunc_div`, `floor_div`, `ceil_div` and `euc_div`.
 
-The remainder of all three functions follows the invariant that `r == n - q*d`.
+The remainder of all four functions follows the invariant that `r == n - q*d`.
 For Euclidean division, the remainder is always non-negative.
 
 The only failure mode for these functions is division by 0 for `wrap`, `thrw` and
@@ -506,9 +506,65 @@ The only failure mode for these functions is division by 0 for `wrap`, `thrw` an
 _Example:_
 
 ```c++
-i8 n{-128};
-i8 d{127};
-auto [q, r] = euc_div(n, d);  // {-2, 126}
+i32 n = 10;
+i32 d = 3;
+std::cout << n << '/' << d << '\n';
+std::cout << "trunc_div : " << trunc_div(n, d) << '\n';
+std::cout << "floor_div : " << floor_div(n, d) << '\n';
+std::cout << "ceil_div  : " << ceil_div(n, d) << '\n';
+std::cout << "euc_div   : " << euc_div(n, d) << "\n\n";
+
+n = -10;
+d = 3;
+std::cout << n << '/' << d << '\n';
+std::cout << "trunc_div : " << trunc_div(n, d) << '\n';
+std::cout << "floor_div : " << floor_div(n, d) << '\n';
+std::cout << "ceil_div  : " << ceil_div(n, d) << '\n';
+std::cout << "euc_div   : " << euc_div(n, d) << "\n\n";
+
+n = 10;
+d = -3;
+std::cout << n << '/' << d << '\n';
+std::cout << "trunc_div : " << trunc_div(n, d) << '\n';
+std::cout << "floor_div : " << floor_div(n, d) << '\n';
+std::cout << "ceil_div  : " << ceil_div(n, d) << '\n';
+std::cout << "euc_div   : " << euc_div(n, d) << "\n\n";
+
+n = -10;
+d = -3;
+std::cout << n << '/' << d << '\n';
+std::cout << "trunc_div : " << trunc_div(n, d) << '\n';
+std::cout << "floor_div : " << floor_div(n, d) << '\n';
+std::cout << "ceil_div  : " << ceil_div(n, d) << '\n';
+std::cout << "euc_div   : " << euc_div(n, d) << '\n';
+```
+
+_Output:_
+
+```
+10/3
+trunc_div : {3, 1}
+floor_div : {3, 1}
+ceil_div  : {4, -2}
+euc_div   : {3, 1}
+
+-10/3
+trunc_div : {-3, -1}
+floor_div : {-4, 2}
+ceil_div  : {-3, -1}
+euc_div   : {-4, 2}
+
+10/-3
+trunc_div : {-3, 1}
+floor_div : {-4, -2}
+ceil_div  : {-3, 1}
+euc_div   : {-3, 1}
+
+-10/-3
+trunc_div : {3, -1}
+floor_div : {3, -1}
+ceil_div  : {4, 2}
+euc_div   : {4, 2}
 ```
 
 ## Requirements

@@ -3101,7 +3101,25 @@ floor_div(Z<Signed, N1, P> const& n, Z<Signed, N2, P> const& d) noexcept(P{} != 
     using R = decltype(n/d);
     using RW = Z<Signed, R::size, Wrap>;
     using R2W = Z<Signed, 2*R::size, Wrap>;
-    R const q{np ? (R2W{n} - (R2W{d}+one)) / R2W{d} : (R2W{n} - (R2W{d}-one)) / R2W{d}};
+    R const q{np ? (R2W{n} - (R2W{d}+one)) / R2W{d} : (R2W{n} + (one-R2W{d})) / R2W{d}};
+    return div_t{q, R{RW{n} - RW{q}*RW{d}}};
+}
+
+template <unsigned N1, unsigned N2, Policy P>
+inline
+constexpr
+auto
+ceil_div(Z<Signed, N1, P> const& n, Z<Signed, N2, P> const& d) noexcept(P{} != Throw{})
+{
+    auto const np = n >= 0;
+    auto const dp = d >= 0;
+    if (np != dp)
+        return trunc_div(n, d);
+    std::int8_t constexpr one{1};
+    using R = decltype(n/d);
+    using RW = Z<Signed, R::size, Wrap>;
+    using R2W = Z<Signed, 2*R::size, Wrap>;
+    R const q{np ? (R2W{n} + (R2W{d}-one)) / R2W{d} : (R2W{n} + (R2W{d}+one)) / R2W{d}};
     return div_t{q, R{RW{n} - RW{q}*RW{d}}};
 }
 
