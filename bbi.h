@@ -3095,7 +3095,7 @@ floor_div(Z<Signed, N1, P> const& n, Z<Signed, N2, P> const& d) noexcept(P{} != 
 {
     auto const np = n >= 0;
     auto const dp = d >= 0;
-    if (np == dp)
+    if (np == dp || d == 0)
         return trunc_div(n, d);
     std::int8_t constexpr one{1};
     using R = decltype(n/d);
@@ -3113,7 +3113,7 @@ ceil_div(Z<Signed, N1, P> const& n, Z<Signed, N2, P> const& d) noexcept(P{} != T
 {
     auto const np = n >= 0;
     auto const dp = d >= 0;
-    if (np != dp)
+    if (np != dp || d == 0)
         return trunc_div(n, d);
     std::int8_t constexpr one{1};
     using R = decltype(n/d);
@@ -3131,7 +3131,7 @@ euc_div(Z<Signed, N1, P> const& n, Z<Signed, N2, P> const& d) noexcept(P{} != Th
 {
     auto const np = n >= 0;
     auto const dp = d >= 0;
-    if (np)
+    if (np || d == 0)
         return trunc_div(n, d);
     std::int8_t constexpr one{1};
     using R = decltype(n/d);
