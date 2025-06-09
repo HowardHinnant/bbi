@@ -1103,6 +1103,116 @@ private:
     static_assert(ProperIntSize<size>);
 };
 
+}  // namespace bbi
+
+namespace std
+{
+
+template <unsigned N1, unsigned N2, bbi::Policy P>
+struct common_type<bbi::Z<bbi::Unsigned, N1, P>, bbi::Z<bbi::Signed, N2, P>>
+{
+    using type = bbi::Z<bbi::Signed, std::max(2*N1, N2), P>;
+};
+
+template <unsigned N1, unsigned N2, bbi::Policy P>
+struct common_type<bbi::Z<bbi::Signed, N1, P>, bbi::Z<bbi::Unsigned, N2, P>>
+{
+    using type = bbi::Z<bbi::Signed, std::max(N1, 2*N2), P>;
+};
+
+template <bbi::SignTag S, unsigned N, bbi::Policy P, bbi::detail::StandardInteger I>
+struct common_type<bbi::Z<S, N, P>, I>
+{
+    using type = conditional_t<(S{} == bbi::Signed{}) == is_signed_v<I>
+        , bbi::Z<S, max<size_t>(N, sizeof(I)*CHAR_BIT), P>
+        , bbi::Z<bbi::Signed, S{} == bbi::Signed{}
+                                     ? max<size_t>(N, 2*sizeof(I)*CHAR_BIT)
+                                     : max<size_t>(2*N, sizeof(I)*CHAR_BIT)
+        , P>>;
+};
+
+template <bbi::SignTag S, unsigned N, bbi::Policy P, bbi::detail::StandardInteger I>
+struct common_type<I, bbi::Z<S, N, P>>
+{
+    using type = common_type_t<bbi::Z<S, N, P>, I>;
+};
+
+template <bbi::SignTag S, unsigned N, bbi::Policy P>
+class numeric_limits<bbi::Z<S, N, P>>
+{
+    using type = bbi::Z<S, N, P>;
+
+public:
+    static constexpr bool is_specialized = true;
+
+    static constexpr type min() noexcept
+    {
+        if constexpr (S{} == bbi::Signed{})
+        {
+            auto constexpr z = bbi::detail::set_high_bit(type{});
+            return z;
+        }
+        else
+        {
+            auto constexpr z = type{};
+            return z;
+        }
+    }
+
+    static constexpr type max() noexcept
+    {
+        if constexpr (S{} == bbi::Signed{})
+        {
+            auto constexpr z = bbi::detail::zero_high_bit(~type{});
+            return z;
+        }
+        else
+        {
+            auto constexpr z = ~type{};
+            return z;
+        }
+    }
+
+    static constexpr type lowest() noexcept {return min();}
+
+    static constexpr bool is_signed = S{} == bbi::Signed{};
+    static constexpr int  digits = static_cast<int>(N - is_signed);
+    static constexpr int  digits10 = static_cast<int>((N - is_signed)*76573ULL/254370);
+    static constexpr int  max_digits10 = 0;
+    static constexpr bool is_integer = true;
+    static constexpr bool is_exact = true;
+    static constexpr int  radix = 2;
+    static constexpr type epsilon() noexcept {return type{};}
+    static constexpr type round_error() noexcept {return type{};}
+
+    static constexpr int  min_exponent   = 0;
+    static constexpr int  min_exponent10 = 0;
+    static constexpr int  max_exponent   = 0;
+    static constexpr int  max_exponent10 = 0;
+
+    static constexpr bool has_infinity      = false;
+    static constexpr bool has_quiet_NaN     = false;
+    static constexpr bool has_signaling_NaN = false;
+    static constexpr bool has_denorm_loss   = false;
+    static constexpr type infinity()      noexcept {return type{};}
+    static constexpr type quiet_NaN()     noexcept {return type{};}
+    static constexpr type signaling_NaN() noexcept {return type{};}
+    static constexpr type denorm_min()    noexcept {return type{};}
+
+    static constexpr bool is_iec559 = false;
+    static constexpr bool is_bounded = true;
+    static constexpr bool is_modulo = is_same_v<P, bbi::Wrap>;
+
+    static constexpr bool traps           = false;
+    static constexpr bool tinyness_before = false;
+    static constexpr float_round_style round_style = round_toward_zero;
+};
+
+}  // namespace std
+
+namespace bbi
+{
+
 namespace detail
 {
 
@@ -3045,32 +3155,32 @@ using i1024 = Z<Signed, 1024, Terminate>;
 
 }  // namespace term
 
-template <unsigned N, Policy P>
+template <class T>
 struct div_t
 {
-    Z<Signed, N, P> quot;
-    Z<Signed, N, P> rem;
+    T quot;
+    T rem;
 };
 
-template <unsigned N, Policy P>
+template <class T>
 auto
 constexpr
-operator==(div_t<N, P> const& x, div_t<N, P> const& y) noexcept
+operator==(div_t<T> const& x, div_t<T> const& y) noexcept
 {
     return x.quot == y.quot && x.rem == y.rem;
 }
 
-template <unsigned N, Policy P>
+template <class T>
 auto
 constexpr
-operator!=(div_t<N, P> const& x, div_t<N, P> const& y) noexcept
+operator!=(div_t<T> const& x, div_t<T> const& y) noexcept
 {
     return !(x == y);
 }
 
-template <unsigned N, Policy P>
+template <class T>
 std::ostream&
-operator<<(std::ostream& os, div_t<N, P> const& x)
+operator<<(std::ostream& os, div_t<T> const& x)
 {
     return os << '{' << x.quot << ", " << x.rem << '}';
 }
@@ -3141,111 +3251,129 @@ euc_div(Z<Signed, N1, P> const& n, Z<Signed, N2, P> const& d) noexcept(P{} != Th
     return div_t{q, R{RW{n} - RW{q}*RW{d}}};
 }
 
+template <detail::StandardSignedInteger I1, detail::StandardSignedInteger I2>
+inline
+constexpr
+auto
+trunc_div(I1 const& n, I2 const& d) noexcept
+{
+    auto const q = n/d;
+    using R = decltype(q);
+    return div_t{q, R{n} - R{q}*R{d}};
+}
+
+template <detail::StandardSignedInteger I1, detail::StandardSignedInteger I2>
+requires (sizeof(I1)*CHAR_BIT <= 32 && sizeof(I2)*CHAR_BIT <= 32)
+inline
+constexpr
+auto
+floor_div(I1 const& n, I2 const& d) noexcept
+{
+    auto const np = n >= 0;
+    auto const dp = d >= 0;
+    if (np == dp || d == 0)
+        return trunc_div(n, d);
+    std::int8_t constexpr one{1};
+    using R = decltype(n/d);
+    using RW = R;
+    using R2W = std::int64_t;
+    static_assert(sizeof(R2W) >= 2*sizeof(RW));
+    R const q(np ? (R2W{n} - (R2W{d}+one)) / R2W{d} : (R2W{n} + (one-R2W{d})) / R2W{d});
+    return div_t{q, R{RW{n} - RW{q}*RW{d}}};
+}
+
+inline
+constexpr
+auto
+floor_div(std::int64_t const& n, std::int64_t const& d) noexcept
+{
+    auto const np = n >= 0;
+    auto const dp = d >= 0;
+    if (np == dp || d == 0)
+        return trunc_div(n, d);
+    std::int8_t constexpr one{1};
+    using R = decltype(n/d);
+    using RW = R;
+    using R2W = Z<Signed, 128, Wrap>;
+    R const q(np ? (R2W{n} - (R2W{d}+one)) / R2W{d} : (R2W{n} + (one-R2W{d})) / R2W{d});
+    return div_t{q, R{RW{n} - RW{q}*RW{d}}};
+}
+
+template <detail::StandardSignedInteger I1, detail::StandardSignedInteger I2>
+requires (sizeof(I1)*CHAR_BIT <= 32 && sizeof(I2)*CHAR_BIT <= 32)
+inline
+constexpr
+auto
+ceil_div(I1 const& n, I2 const& d) noexcept
+{
+    auto const np = n >= 0;
+    auto const dp = d >= 0;
+    if (np != dp || d == 0)
+        return trunc_div(n, d);
+    std::int8_t constexpr one{1};
+    using R = decltype(n/d);
+    using RW = R;
+    using R2W = std::int64_t;
+    static_assert(sizeof(R2W) >= 2*sizeof(RW));
+    R const q(np ? (R2W{n} + (R2W{d}-one)) / R2W{d} : (R2W{n} + (R2W{d}+one)) / R2W{d});
+    return div_t{q, R{RW{n} - RW{q}*RW{d}}};
+}
+
+inline
+constexpr
+auto
+ceil_div(std::int64_t const& n, std::int64_t const& d) noexcept
+{
+    auto const np = n >= 0;
+    auto const dp = d >= 0;
+    if (np != dp || d == 0)
+        return trunc_div(n, d);
+    std::int8_t constexpr one{1};
+    using R = decltype(n/d);
+    using RW = R;
+    using R2W = Z<Signed, 128, Wrap>;
+    R const q(np ? (R2W{n} + (R2W{d}-one)) / R2W{d} : (R2W{n} + (R2W{d}+one)) / R2W{d});
+    return div_t{q, R{RW{n} - RW{q}*RW{d}}};
+}
+
+
+template <detail::StandardSignedInteger I1, detail::StandardSignedInteger I2>
+requires (sizeof(I1)*CHAR_BIT <= 32 && sizeof(I2)*CHAR_BIT <= 32)
+inline
+constexpr
+auto
+euc_div(I1 const& n, I2 const& d) noexcept
+{
+    auto const np = n >= 0;
+    auto const dp = d >= 0;
+    if (np || d == 0)
+        return trunc_div(n, d);
+    std::int8_t constexpr one{1};
+    using R = decltype(n/d);
+    using RW = R;
+    using R2W = std::int64_t;
+    static_assert(sizeof(R2W) >= 2*sizeof(RW));
+    R const q(dp ? (R2W{n} + (one-R2W{d})) / R2W{d} : (R2W{n} + (R2W{d}+one)) / R2W{d});
+    return div_t{q, R{RW{n} - RW{q}*RW{d}}};
+}
+
+inline
+constexpr
+auto
+euc_div(std::int64_t const& n, std::int64_t const& d) noexcept
+{
+    auto const np = n >= 0;
+    auto const dp = d >= 0;
+    if (np || d == 0)
+        return trunc_div(n, d);
+    std::int8_t constexpr one{1};
+    using R = decltype(n/d);
+    using RW = R;
+    using R2W = Z<Signed, 128, Wrap>;
+    R const q(dp ? (R2W{n} + (one-R2W{d})) / R2W{d} : (R2W{n} + (R2W{d}+one)) / R2W{d});
+    return div_t{q, R{RW{n} - RW{q}*RW{d}}};
+}
+
 }  // namespace bbi
-
-namespace std
-{
-
-template <unsigned N1, unsigned N2, bbi::Policy P>
-struct common_type<bbi::Z<bbi::Unsigned, N1, P>, bbi::Z<bbi::Signed, N2, P>>
-{
-    using type = bbi::Z<bbi::Signed, std::max(2*N1, N2), P>;
-};
-
-template <unsigned N1, unsigned N2, bbi::Policy P>
-struct common_type<bbi::Z<bbi::Signed, N1, P>, bbi::Z<bbi::Unsigned, N2, P>>
-{
-    using type = bbi::Z<bbi::Signed, std::max(N1, 2*N2), P>;
-};
-
-template <bbi::SignTag S, unsigned N, bbi::Policy P, bbi::detail::StandardInteger I>
-struct common_type<bbi::Z<S, N, P>, I>
-{
-    using type = conditional_t<(S{} == bbi::Signed{}) == is_signed_v<I>
-        , bbi::Z<S, max<size_t>(N, sizeof(I)*CHAR_BIT), P>
-        , bbi::Z<bbi::Signed, S{} == bbi::Signed{}
-                                     ? max<size_t>(N, 2*sizeof(I)*CHAR_BIT)
-                                     : max<size_t>(2*N, sizeof(I)*CHAR_BIT)
-        , P>>;
-};
-
-template <bbi::SignTag S, unsigned N, bbi::Policy P, bbi::detail::StandardInteger I>
-struct common_type<I, bbi::Z<S, N, P>>
-{
-    using type = common_type_t<bbi::Z<S, N, P>, I>;
-};
-
-template <bbi::SignTag S, unsigned N, bbi::Policy P>
-class numeric_limits<bbi::Z<S, N, P>>
-{
-    using type = bbi::Z<S, N, P>;
-
-public:
-    static constexpr bool is_specialized = true;
-
-    static constexpr type min() noexcept
-    {
-        if constexpr (S{} == bbi::Signed{})
-        {
-            auto constexpr z = bbi::detail::set_high_bit(type{});
-            return z;
-        }
-        else
-        {
-            auto constexpr z = type{};
-            return z;
-        }
-    }
-
-    static constexpr type max() noexcept
-    {
-        if constexpr (S{} == bbi::Signed{})
-        {
-            auto constexpr z = bbi::detail::zero_high_bit(~type{});
-            return z;
-        }
-        else
-        {
-            auto constexpr z = ~type{};
-            return z;
-        }
-    }
-
-    static constexpr type lowest() noexcept {return min();}
-
-    static constexpr bool is_signed = S{} == bbi::Signed{};
-    static constexpr int  digits = static_cast<int>(N - is_signed);
-    static constexpr int  digits10 = static_cast<int>((N - is_signed)*76573ULL/254370);
-    static constexpr int  max_digits10 = 0;
-    static constexpr bool is_integer = true;
-    static constexpr bool is_exact = true;
-    static constexpr int  radix = 2;
-    static constexpr type epsilon() noexcept {return type{};}
-    static constexpr type round_error() noexcept {return type{};}
-
-    static constexpr int  min_exponent   = 0;
-    static constexpr int  min_exponent10 = 0;
-    static constexpr int  max_exponent   = 0;
-    static constexpr int  max_exponent10 = 0;
-
-    static constexpr bool has_infinity      = false;
-    static constexpr bool has_quiet_NaN     = false;
-    static constexpr bool has_signaling_NaN = false;
-    static constexpr bool has_denorm_loss   = false;
-    static constexpr type infinity()      noexcept {return type{};}
-    static constexpr type quiet_NaN()     noexcept {return type{};}
-    static constexpr type signaling_NaN() noexcept {return type{};}
-    static constexpr type denorm_min()    noexcept {return type{};}
-
-    static constexpr bool is_iec559 = false;
-    static constexpr bool is_bounded = true;
-    static constexpr bool is_modulo = is_same_v<P, bbi::Wrap>;
-
-    static constexpr bool traps           = false;
-    static constexpr bool tinyness_before = false;
-    static constexpr float_round_style round_style = round_toward_zero;
-};
-
-}  // namespace std
 
 #endif  // BBI_H
