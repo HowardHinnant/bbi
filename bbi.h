@@ -34,12 +34,15 @@
 #include <charconv>
 #include <climits>
 #include <cstdint>
+#include <cctype>
+#include <exception>
 #include <iostream>
 #include <istream>
 #include <limits>
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
 
@@ -290,6 +293,9 @@ public:
         Z(Z<S2, N2, P2> const& x)
             noexcept(policy{} != Throw{})
             : Z{Z<S2, size*2, policy>{x}} {}
+
+    explicit Z(std::string_view s);
+    explicit operator std::string() const;
 
     constexpr explicit operator bool() const noexcept {return bool(rep_);}
 
@@ -720,6 +726,9 @@ public:
         Z(Z<S2, N2, P2> const& x)
             noexcept(policy{} != Throw{})
             : Z{Z<S2, size*2, policy>{x}} {}
+
+    explicit Z(std::string_view s);
+    explicit operator std::string() const;
 
     constexpr explicit operator bool() const noexcept {return bool(hi_ | lo_);}
 
@@ -3038,6 +3047,76 @@ operator>>(std::istream& is, Z<S, N, P>& x)
         return is;
     }
     return is;
+}
+
+namespace detail
+{
+
+template <class Z>
+Z
+from_string_view(std::string_view const s)
+{
+    auto const throw_error = [&s]()
+    {
+        throw std::runtime_error('\"' + std::string(s) + "\" is not a valid integer");
+    };
+    unsigned i = 0;
+    while (i < s.size() && std::isspace(s[i]))
+        ++i;
+    if (i == s.size())
+        throw_error();
+    bool neg = false;
+    auto c = s[i];
+    if (c == '-' || c == '+')
+    {
+        ++i;
+        if (c == '-')
+            neg = true;
+        if (i == s.size())
+            throw_error();
+        c = s[i];
+    }
+    if (!('0' <= c && c <= '9'))
+        throw_error();
+    ++i;
+    Z z{c - '0'};
+    while (true)
+    {
+        if (i == s.size())
+            break;
+        c = s[i];
+        if (!('0' <= c && c <= '9'))
+            break;
+        ++i;
+        z = z*Z{10} + Z{c - '0'};
+    }
+    if (neg)
+        z = -z;
+    return z;
+}
+
+}  // namespace detail
+
+template <SignTag S, unsigned N, Policy P>
+Z<S, N, P, true>::Z(std::string_view s)
+    : Z{detail::from_string_view<Z>(s)}
+    {}
+
+template <SignTag S, unsigned N, Policy P>
+Z<S, N, P, false>::Z(std::string_view s)
+    : Z{detail::from_string_view<Z>(s)}
+    {}
+
+template <SignTag S, unsigned N, Policy P>
+Z<S, N, P, true>::operator std::string() const
+{
+    return to_string(*this);
+}
+
+template <SignTag S, unsigned N, Policy P>
+Z<S, N, P, false>::operator std::string() const
+{
+    return to_string(*this);
 }
 
 // Policy namespaces
