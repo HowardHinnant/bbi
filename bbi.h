@@ -3455,4 +3455,22 @@ euc_div(std::int64_t const& n, std::int64_t const& d) noexcept
 
 }  // namespace bbi
 
+namespace std
+{
+
+template <bbi::SignTag S, unsigned N, bbi::Policy P>
+struct make_unsigned<bbi::Z<S, N, P>>
+{
+    using type = bbi::Z<bbi::Unsigned, N, P>;
+};
+
+template <bbi::SignTag S, unsigned N, bbi::Policy P>
+struct make_signed<bbi::Z<S, N, P>>
+{
+    using type = bbi::Z<bbi::Signed, N, P>;
+};
+
+}  // namespace std
+
+
 #endif  // BBI_H
