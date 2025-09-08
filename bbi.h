@@ -3153,6 +3153,8 @@ using u128  = Z<Unsigned,  128, Wrap>;
 using u256  = Z<Unsigned,  256, Wrap>;
 using u512  = Z<Unsigned,  512, Wrap>;
 using u1024 = Z<Unsigned, 1024, Wrap>;
+using u2048 = Z<Unsigned, 2048, Wrap>;
+using u4096 = Z<Unsigned, 4096, Wrap>;
 
 using i8    = Z<Signed,    8, Wrap>;
 using i16   = Z<Signed,   16, Wrap>;
@@ -3162,6 +3164,8 @@ using i128  = Z<Signed,  128, Wrap>;
 using i256  = Z<Signed,  256, Wrap>;
 using i512  = Z<Signed,  512, Wrap>;
 using i1024 = Z<Signed, 1024, Wrap>;
+using i2048 = Z<Signed, 2048, Wrap>;
+using i4096 = Z<Signed, 4096, Wrap>;
 
 }  // namespace wrap
 
@@ -3176,6 +3180,8 @@ using u128  = Z<Unsigned,  128, Saturate>;
 using u256  = Z<Unsigned,  256, Saturate>;
 using u512  = Z<Unsigned,  512, Saturate>;
 using u1024 = Z<Unsigned, 1024, Saturate>;
+using u2048 = Z<Unsigned, 2048, Saturate>;
+using u4096 = Z<Unsigned, 4096, Saturate>;
 
 using i8    = Z<Signed,    8, Saturate>;
 using i16   = Z<Signed,   16, Saturate>;
@@ -3185,6 +3191,8 @@ using i128  = Z<Signed,  128, Saturate>;
 using i256  = Z<Signed,  256, Saturate>;
 using i512  = Z<Signed,  512, Saturate>;
 using i1024 = Z<Signed, 1024, Saturate>;
+using i2048 = Z<Signed, 2048, Saturate>;
+using i4096 = Z<Signed, 4096, Saturate>;
 
 }  // namespace sat
 
@@ -3199,6 +3207,8 @@ using u128  = Z<Unsigned,  128, Throw>;
 using u256  = Z<Unsigned,  256, Throw>;
 using u512  = Z<Unsigned,  512, Throw>;
 using u1024 = Z<Unsigned, 1024, Throw>;
+using u2048 = Z<Unsigned, 2048, Throw>;
+using u4096 = Z<Unsigned, 4096, Throw>;
 
 using i8    = Z<Signed,    8, Throw>;
 using i16   = Z<Signed,   16, Throw>;
@@ -3208,6 +3218,8 @@ using i128  = Z<Signed,  128, Throw>;
 using i256  = Z<Signed,  256, Throw>;
 using i512  = Z<Signed,  512, Throw>;
 using i1024 = Z<Signed, 1024, Throw>;
+using i2048 = Z<Signed, 2048, Throw>;
+using i4096 = Z<Signed, 4096, Throw>;
 
 }  // namespace thrw
 
@@ -3222,6 +3234,8 @@ using u128  = Z<Unsigned,  128, Terminate>;
 using u256  = Z<Unsigned,  256, Terminate>;
 using u512  = Z<Unsigned,  512, Terminate>;
 using u1024 = Z<Unsigned, 1024, Terminate>;
+using u2048 = Z<Unsigned, 2048, Terminate>;
+using u4096 = Z<Unsigned, 4096, Terminate>;
 
 using i8    = Z<Signed,    8, Terminate>;
 using i16   = Z<Signed,   16, Terminate>;
@@ -3231,6 +3245,8 @@ using i128  = Z<Signed,  128, Terminate>;
 using i256  = Z<Signed,  256, Terminate>;
 using i512  = Z<Signed,  512, Terminate>;
 using i1024 = Z<Signed, 1024, Terminate>;
+using i2048 = Z<Signed, 2048, Terminate>;
+using i4096 = Z<Signed, 4096, Terminate>;
 
 }  // namespace term
 

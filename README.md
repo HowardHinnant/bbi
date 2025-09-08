@@ -68,6 +68,8 @@ i128
 i256
 i512
 i1024
+i2048
+i4096
 
 u8
 u16
@@ -77,6 +79,8 @@ u128
 u256
 u512
 u1024
+u2048
+u4096
 ```
 
 Each of these are a type alias to a specialization of
