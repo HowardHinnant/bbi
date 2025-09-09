@@ -34,7 +34,6 @@
 #include <charconv>
 #include <climits>
 #include <cstdint>
-#include <cctype>
 #include <exception>
 #include <iostream>
 #include <istream>
@@ -294,7 +293,7 @@ public:
             noexcept(policy{} != Throw{})
             : Z{Z<S2, size*2, policy>{x}} {}
 
-    explicit Z(std::string_view s);
+    explicit constexpr Z(std::string_view s);
     explicit operator std::string() const;
 
     constexpr explicit operator bool() const noexcept {return bool(rep_);}
@@ -727,7 +726,7 @@ public:
             noexcept(policy{} != Throw{})
             : Z{Z<S2, size*2, policy>{x}} {}
 
-    explicit Z(std::string_view s);
+    explicit constexpr Z(std::string_view s);
     explicit operator std::string() const;
 
     constexpr explicit operator bool() const noexcept {return bool(hi_ | lo_);}
@@ -3053,6 +3052,7 @@ namespace detail
 {
 
 template <class Z>
+constexpr
 Z
 from_string_view(std::string_view const s)
 {
@@ -3061,8 +3061,6 @@ from_string_view(std::string_view const s)
         throw std::runtime_error('\"' + std::string(s) + "\" is not a valid integer");
     };
     unsigned i = 0;
-    while (i < s.size() && std::isspace(s[i]))
-        ++i;
     if (i == s.size())
         throw_error();
     bool neg = false;
@@ -3098,11 +3096,13 @@ from_string_view(std::string_view const s)
 }  // namespace detail
 
 template <SignTag S, unsigned N, Policy P>
+constexpr
 Z<S, N, P, true>::Z(std::string_view s)
     : Z{detail::from_string_view<Z>(s)}
     {}
 
 template <SignTag S, unsigned N, Policy P>
+constexpr
 Z<S, N, P, false>::Z(std::string_view s)
     : Z{detail::from_string_view<Z>(s)}
     {}
