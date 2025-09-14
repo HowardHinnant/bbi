@@ -239,7 +239,9 @@ public:
     template <std::integral I>
         constexpr
         explicit(!detail::ImplicitConvertFrom<sign, size, I>)
-        Z(I i) noexcept (policy{} != Throw{}) : rep_(i)
+        Z(I i)
+            noexcept(policy{} != Throw{} || detail::ImplicitConvertFrom<sign, size, I>)
+            : rep_(i)
             {detail::check(*this, i);}
 
     // Construction from other Z
@@ -249,7 +251,7 @@ public:
         explicit(P2{} != policy{})
         constexpr
         Z(Z<Unsigned, N2, P2> const& x)
-            noexcept(policy{} != Throw{})
+            noexcept  // no conversions can overflow
             : rep_{x.rep_} {detail::check(*this, x);}
 
     template <unsigned N2, Policy P2>
@@ -669,7 +671,7 @@ public:
         constexpr
         explicit(!detail::ImplicitConvertFrom<sign, size, I>)
         Z(I i)
-            noexcept(policy{} != Throw{})
+            noexcept(policy{} != Throw{} || detail::ImplicitConvertFrom<sign, size, I>)
             : lo_(i), hi_(i >> size/2)
             {detail::check(*this, i);}
 
@@ -680,7 +682,7 @@ public:
         constexpr
         explicit(!detail::ImplicitConvertFrom<sign, size, I>)
         Z(I i)
-            noexcept(policy{} != Throw{})
+            noexcept(policy{} != Throw{} || detail::ImplicitConvertFrom<sign, size, I>)
             : lo_(i), hi_(-(i < 0))
             {detail::check(*this, i);}
 

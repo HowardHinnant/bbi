@@ -4733,4 +4733,33 @@ main()
     test_div<bbi::Signed, 16, bbi::Throw>();
     test_div<bbi::Signed, 32, bbi::Throw>();
     test_div<bbi::Signed, 64, bbi::Throw>();
+
+    // test that noexcept for bbi::thrw construction is
+    // consistent with explicit (implicit conversions can't throw)
+    {
+    std::int8_t j;
+    static_assert(noexcept(bbi::thrw::i16{j}));
+    static_assert(!noexcept(bbi::thrw::u16{j}));
+    }
+    {
+    bbi::thrw::u8 j;
+    static_assert(noexcept(bbi::thrw::i16{j}));
+    static_assert(noexcept(bbi::thrw::u16{j}));
+    }
+    {
+    bbi::thrw::i8 j;
+    static_assert(noexcept(bbi::thrw::i16{j}));
+    static_assert(!noexcept(bbi::thrw::u16{j}));
+    }
+    {
+    bbi::wrap::i16 j;
+    bbi::wrap::u16 k;
+    static_assert(!noexcept(bbi::thrw::i16{k}));
+    static_assert(!noexcept(bbi::thrw::u16{j}));
+    }
+    {
+    std::int64_t j;
+    static_assert(noexcept(bbi::thrw::i256{j}));
+    static_assert(!noexcept(bbi::thrw::u256{j}));
+    }
 }
