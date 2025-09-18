@@ -192,11 +192,36 @@ concept StandardUnsignedInteger = std::is_same_v<I, unsigned char>  ||
 template <class I>
 concept StandardInteger = StandardSignedInteger<I> || StandardUnsignedInteger<I>;
 
-template <class S, unsigned N, class I>
-concept ImplicitConvertFrom = StandardInteger<I> &&
-    ((S{} == Signed{}) == std::is_signed_v<I> ?
-        N >= sizeof(I)*CHAR_BIT :
-        S{} == Unsigned{} ? false : N > sizeof(I)*CHAR_BIT);
+// Is {S2, N2} -> {S1, N1} value preserving?
+template <class S1, unsigned N1, class S2, unsigned N2>
+concept ValuePreservingConversion =
+    (S1{} == S2{} ?
+        N1 >= N2 :
+        S1{} == Unsigned{} ? false : N1 > N2);
+
+template <class Z, class I>
+concept ExplicitFromI =
+    !StandardInteger<I> || !ValuePreservingConversion<typename Z::sign, Z::size,
+                              std::conditional_t<std::is_signed_v<I>, Signed, Unsigned>,
+                              sizeof(I)*CHAR_BIT>;
+
+template <class Z, class I>
+concept NoexceptFromI =
+    (typename Z::policy{} != Throw{} ||
+     ValuePreservingConversion<typename Z::sign, Z::size,
+                               std::conditional_t<std::is_signed_v<I>, Signed, Unsigned>,
+                               std::is_same_v<I, bool> ? 1u : sizeof(I)*CHAR_BIT>);
+
+template <class Z1, class Z2>
+concept ExplicitFromZ =
+    (typename Z1::policy{} != typename Z2::policy{}) ||
+    !ValuePreservingConversion<typename Z1::sign, Z1::size, typename Z2::sign, Z2::size>;
+
+template <class Z1, class Z2>
+concept NoexceptFromZ =
+    (typename Z1::policy{} != Throw{}) ||
+    ValuePreservingConversion<typename Z1::sign, Z1::size, typename Z2::sign, Z2::size>;
+
 
 }  // namespace detail
 
@@ -238,9 +263,9 @@ public:
     // Implicit if lossless, otherwise explicit
     template <std::integral I>
         constexpr
-        explicit(!detail::ImplicitConvertFrom<sign, size, I>)
+        explicit(detail::ExplicitFromI<Z, I>)
         Z(I i)
-            noexcept(policy{} != Throw{} || detail::ImplicitConvertFrom<sign, size, I>)
+            noexcept(detail::NoexceptFromI<Z, I>)
             : rep_(i)
             {detail::check(*this, i);}
 
@@ -248,51 +273,51 @@ public:
 
     template <unsigned N2, Policy P2>
         requires (N2 < size)
-        explicit(P2{} != policy{})
+        explicit(detail::ExplicitFromZ<Z, Z<Unsigned, N2, P2>>)
         constexpr
         Z(Z<Unsigned, N2, P2> const& x)
-            noexcept  // no conversions can overflow
+            noexcept(detail::NoexceptFromZ<Z, Z<Unsigned, N2, P2>>)
             : rep_{x.rep_} {detail::check(*this, x);}
 
     template <unsigned N2, Policy P2>
         requires (N2 < size)
-        explicit ((sign{} == Unsigned{}) || P2{} != policy{})
+        explicit(detail::ExplicitFromZ<Z, Z<Signed, N2, P2>>)
         constexpr
         Z(Z<Signed, N2, P2> const& x)
-            noexcept(!((sign{} == Unsigned{}) && policy{} == Throw{}))
+            noexcept(detail::NoexceptFromZ<Z, Z<Signed, N2, P2>>)
             : rep_(srep_t{typename Z<Signed, N2, P2>::srep_t(x.rep_)})
               {detail::check(*this, x);}
 
     template <SignTag S2, Policy P2>
         requires (sign{} != S2{} || policy{} != P2{})
-        explicit
+        explicit(detail::ExplicitFromZ<Z, Z<S2, size, P2>>)
         constexpr
         Z(Z<S2, size, P2> const& x)
-            noexcept(policy{} != Throw{})
+            noexcept(detail::NoexceptFromZ<Z, Z<S2, size, P2>>)
             : rep_{x.rep_} {detail::check(*this, x);}
 
     template <SignTag S2, unsigned N2, Policy P2>
         requires (N2 > size && N2 <= Nlimit)
         constexpr
-        explicit
+        explicit(detail::ExplicitFromZ<Z, Z<S2, N2, P2>>)
         Z(Z<S2, N2, P2> const& x)
-            noexcept(policy{} != Throw{})
+            noexcept(detail::NoexceptFromZ<Z, Z<S2, N2, P2>>)
             : rep_(x.rep_) {detail::check(*this, x);}
 
     template <SignTag S2, unsigned N2, Policy P2>
         requires (N2 == size*2 && Nlimit < N2)
         constexpr
-        explicit
+        explicit(detail::ExplicitFromZ<Z, Z<S2, N2, P2>>)
         Z(Z<S2, N2, P2> const& x)
-            noexcept(policy{} != Throw{})
+            noexcept(detail::NoexceptFromZ<Z, Z<S2, N2, P2>>)
             : rep_(x.lo_) {detail::check(*this, x);}
 
     template <SignTag S2, unsigned N2, Policy P2>
         requires (N2 > size*2 && Nlimit < N2)
         constexpr
-        explicit
+        explicit(detail::ExplicitFromZ<Z, Z<S2, N2, P2>>)
         Z(Z<S2, N2, P2> const& x)
-            noexcept(policy{} != Throw{})
+            noexcept(detail::NoexceptFromZ<Z, Z<S2, N2, P2>>)
             : Z{Z<S2, size*2, policy>{x}} {}
 
     explicit constexpr Z(std::string_view s);
@@ -669,9 +694,9 @@ public:
     template <std::integral I>
         requires (size < 2*sizeof(I)*CHAR_BIT)
         constexpr
-        explicit(!detail::ImplicitConvertFrom<sign, size, I>)
+        explicit(detail::ExplicitFromI<Z, I>)
         Z(I i)
-            noexcept(policy{} != Throw{} || detail::ImplicitConvertFrom<sign, size, I>)
+            noexcept(detail::NoexceptFromI<Z, I>)
             : lo_(i), hi_(i >> size/2)
             {detail::check(*this, i);}
 
@@ -680,9 +705,9 @@ public:
     template <std::integral I>
         requires (size >= 2*sizeof(I)*CHAR_BIT)
         constexpr
-        explicit(!detail::ImplicitConvertFrom<sign, size, I>)
+        explicit(detail::ExplicitFromI<Z, I>)
         Z(I i)
-            noexcept(policy{} != Throw{} || detail::ImplicitConvertFrom<sign, size, I>)
+            noexcept(detail::NoexceptFromI<Z, I>)
             : lo_(i), hi_(-(i < 0))
             {detail::check(*this, i);}
 
@@ -690,42 +715,42 @@ public:
 
     template <SignTag S2, unsigned N2, Policy P2>
         requires (N2 < size/2)
-        explicit((sign{} == Unsigned{} && S2{} == Signed{}) || P2{} != policy{})
+        explicit(detail::ExplicitFromZ<Z, Z<S2, N2, P2>>)
         constexpr
         Z(Z<S2, N2, P2> const& x)
-            noexcept(!((sign{} == Unsigned{} && S2{} == Signed{}) && policy{} == Throw{}))
+            noexcept(detail::NoexceptFromZ<Z, Z<S2, N2, P2>>)
             : Z{Z<S2, size/2, policy>{x}} {}
 
     template <SignTag S2, unsigned N2, Policy P2>
         requires (N2 == size/2)
-        explicit ((sign{} == Unsigned{} && S2{} == Signed{}) || P2{} != policy{})
+        explicit(detail::ExplicitFromZ<Z, Z<S2, N2, P2>>)
         constexpr
         Z(Z<S2, N2, P2> const& x)
-            noexcept(!((sign{} == Unsigned{} && S2{} == Signed{}) && policy{} == Throw{}))
+            noexcept(detail::NoexceptFromZ<Z, Z<S2, N2, P2>>)
             : lo_{x}, hi_{uhalf_t::sign_extend(x)} {detail::check(*this, x);}
 
     template <SignTag S2, Policy P2>
         requires (sign{} != S2{} || P2{} != policy{})
-        explicit
+        explicit(detail::ExplicitFromZ<Z, Z<S2, size, P2>>)
         constexpr
         Z(Z<S2, size, P2> const& x)
-            noexcept(policy{} != Throw{})
+            noexcept(detail::NoexceptFromZ<Z, Z<S2, size, P2>>)
             : lo_{x.lo_}, hi_{x.hi_} {detail::check(*this, x);}
 
     template <SignTag S2, unsigned N2, Policy P2>
         requires (N2 == size*2)
         constexpr
-        explicit
+        explicit(detail::ExplicitFromZ<Z, Z<S2, N2, P2>>)
         Z(Z<S2, N2, P2> const& x)
-            noexcept(policy{} != Throw{})
+            noexcept(detail::NoexceptFromZ<Z, Z<S2, N2, P2>>)
             : lo_{x.lo_.lo_}, hi_{x.lo_.hi_} {detail::check(*this, x);}
 
     template <SignTag S2, unsigned N2, Policy P2>
         requires (N2 > size*2)
         constexpr
-        explicit
+        explicit(detail::ExplicitFromZ<Z, Z<S2, N2, P2>>)
         Z(Z<S2, N2, P2> const& x)
-            noexcept(policy{} != Throw{})
+            noexcept(detail::NoexceptFromZ<Z, Z<S2, N2, P2>>)
             : Z{Z<S2, size*2, policy>{x}} {}
 
     explicit constexpr Z(std::string_view s);

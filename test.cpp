@@ -3407,6 +3407,31 @@ test_div()
     }
 }
 
+template <class U, class V>
+void
+implicit_equal_to_noexcept()
+{
+    static_assert(std::is_convertible_v<V, U> == noexcept(U{V{}}));
+}
+
+template <class U, class V>
+void
+explicit_and_noexcept()
+{
+    static_assert(std::is_constructible_v<U, V> &&
+                 !std::is_convertible_v<V, U> &&
+                  noexcept(U{V{}}));
+}
+
+template <class U, class V>
+void
+explicit_and_not_noexcept()
+{
+    static_assert(std::is_constructible_v<U, V> &&
+                 !std::is_convertible_v<V, U> &&
+                 !noexcept(U{V{}}));
+}
+
 int
 main()
 {
@@ -4762,4 +4787,221 @@ main()
     static_assert(noexcept(bbi::thrw::i256{j}));
     static_assert(!noexcept(bbi::thrw::u256{j}));
     }
+
+    implicit_equal_to_noexcept<bbi::thrw::i8, std::int8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, std::int16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, std::int32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, std::int64_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, std::uint8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, std::uint16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, std::uint32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, std::uint64_t>();
+
+    implicit_equal_to_noexcept<bbi::thrw::u8, std::int8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, std::int16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, std::int32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, std::int64_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, std::uint8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, std::uint16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, std::uint32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, std::uint64_t>();
+
+    implicit_equal_to_noexcept<bbi::thrw::i16, std::int8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, std::int16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, std::int32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, std::int64_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, std::uint8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, std::uint16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, std::uint32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, std::uint64_t>();
+
+    implicit_equal_to_noexcept<bbi::thrw::u16, std::int8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, std::int16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, std::int32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, std::int64_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, std::uint8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, std::uint16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, std::uint32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, std::uint64_t>();
+
+    implicit_equal_to_noexcept<bbi::thrw::i32, std::int8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, std::int16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, std::int32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, std::int64_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, std::uint8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, std::uint16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, std::uint32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, std::uint64_t>();
+
+    implicit_equal_to_noexcept<bbi::thrw::u32, std::int8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, std::int16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, std::int32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, std::int64_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, std::uint8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, std::uint16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, std::uint32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, std::uint64_t>();
+
+    implicit_equal_to_noexcept<bbi::thrw::i64, std::int8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, std::int16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, std::int32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, std::int64_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, std::uint8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, std::uint16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, std::uint32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, std::uint64_t>();
+
+    implicit_equal_to_noexcept<bbi::thrw::u64, std::int8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, std::int16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, std::int32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, std::int64_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, std::uint8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, std::uint16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, std::uint32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, std::uint64_t>();
+
+    implicit_equal_to_noexcept<bbi::thrw::i128, std::int8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, std::int16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, std::int32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, std::int64_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, std::uint8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, std::uint16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, std::uint32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, std::uint64_t>();
+
+    implicit_equal_to_noexcept<bbi::thrw::u128, std::int8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, std::int16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, std::int32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, std::int64_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, std::uint8_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, std::uint16_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, std::uint32_t>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, std::uint64_t>();
+
+
+
+    implicit_equal_to_noexcept<bbi::thrw::i8, bbi::thrw::i8>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, bbi::thrw::i16>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, bbi::thrw::i32>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, bbi::thrw::i64>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, bbi::thrw::i128>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, bbi::thrw::u8>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, bbi::thrw::u16>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, bbi::thrw::u32>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, bbi::thrw::u64>();
+    implicit_equal_to_noexcept<bbi::thrw::i8, bbi::thrw::u128>();
+
+    implicit_equal_to_noexcept<bbi::thrw::u8, bbi::thrw::i8>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, bbi::thrw::i16>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, bbi::thrw::i32>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, bbi::thrw::i64>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, bbi::thrw::i128>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, bbi::thrw::u8>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, bbi::thrw::u16>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, bbi::thrw::u32>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, bbi::thrw::u64>();
+    implicit_equal_to_noexcept<bbi::thrw::u8, bbi::thrw::u128>();
+
+    implicit_equal_to_noexcept<bbi::thrw::i16, bbi::thrw::i8>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, bbi::thrw::i16>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, bbi::thrw::i32>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, bbi::thrw::i64>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, bbi::thrw::i128>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, bbi::thrw::u8>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, bbi::thrw::u16>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, bbi::thrw::u32>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, bbi::thrw::u64>();
+    implicit_equal_to_noexcept<bbi::thrw::i16, bbi::thrw::u128>();
+
+    implicit_equal_to_noexcept<bbi::thrw::u16, bbi::thrw::i8>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, bbi::thrw::i16>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, bbi::thrw::i32>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, bbi::thrw::i64>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, bbi::thrw::i128>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, bbi::thrw::u8>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, bbi::thrw::u16>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, bbi::thrw::u32>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, bbi::thrw::u64>();
+    implicit_equal_to_noexcept<bbi::thrw::u16, bbi::thrw::u128>();
+
+    implicit_equal_to_noexcept<bbi::thrw::i32, bbi::thrw::i8>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, bbi::thrw::i16>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, bbi::thrw::i32>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, bbi::thrw::i64>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, bbi::thrw::i128>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, bbi::thrw::u8>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, bbi::thrw::u16>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, bbi::thrw::u32>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, bbi::thrw::u64>();
+    implicit_equal_to_noexcept<bbi::thrw::i32, bbi::thrw::u128>();
+
+    implicit_equal_to_noexcept<bbi::thrw::u32, bbi::thrw::i8>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, bbi::thrw::i16>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, bbi::thrw::i32>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, bbi::thrw::i64>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, bbi::thrw::i128>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, bbi::thrw::u8>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, bbi::thrw::u16>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, bbi::thrw::u32>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, bbi::thrw::u64>();
+    implicit_equal_to_noexcept<bbi::thrw::u32, bbi::thrw::u128>();
+
+    implicit_equal_to_noexcept<bbi::thrw::i64, bbi::thrw::i8>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, bbi::thrw::i16>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, bbi::thrw::i32>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, bbi::thrw::i64>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, bbi::thrw::i128>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, bbi::thrw::u8>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, bbi::thrw::u16>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, bbi::thrw::u32>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, bbi::thrw::u64>();
+    implicit_equal_to_noexcept<bbi::thrw::i64, bbi::thrw::u128>();
+
+    implicit_equal_to_noexcept<bbi::thrw::u64, bbi::thrw::i8>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, bbi::thrw::i16>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, bbi::thrw::i32>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, bbi::thrw::i64>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, bbi::thrw::i128>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, bbi::thrw::u8>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, bbi::thrw::u16>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, bbi::thrw::u32>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, bbi::thrw::u64>();
+    implicit_equal_to_noexcept<bbi::thrw::u64, bbi::thrw::u128>();
+
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::i8>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::i16>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::i32>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::i64>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::i128>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::i256>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::u8>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::u16>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::u32>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::u64>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::u128>();
+    implicit_equal_to_noexcept<bbi::thrw::i128, bbi::thrw::u256>();
+
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::i8>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::i16>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::i32>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::i64>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::i128>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::i256>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::u8>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::u16>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::u32>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::u64>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::u128>();
+    implicit_equal_to_noexcept<bbi::thrw::u128, bbi::thrw::u256>();
+
+    explicit_and_noexcept<bbi::thrw::i8, bool>();
+    explicit_and_noexcept<bbi::thrw::u8, bool>();
+    explicit_and_noexcept<bbi::thrw::u128, bbi::sat::u64>();
+    explicit_and_noexcept<bbi::thrw::u128, bbi::sat::u128>();
+
+    explicit_and_not_noexcept<bbi::thrw::u32, bbi::thrw::i32>();
+    explicit_and_not_noexcept<bbi::thrw::i32, bbi::thrw::u32>();
+
+    explicit_and_not_noexcept<bbi::thrw::u128, bbi::thrw::i128>();
+    explicit_and_not_noexcept<bbi::thrw::i128, bbi::thrw::u128>();
 }
