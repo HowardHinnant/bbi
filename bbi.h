@@ -172,6 +172,7 @@ push_digits(std::string& r, Z<Unsigned, N1, Wrap>& x);
 
 template <unsigned N>
 requires(N <= Nlimit)
+constexpr
 unsigned
 divu10(Z<Unsigned, N, Wrap>& u) noexcept;
 
@@ -571,11 +572,24 @@ private:
     friend
     constexpr
     unsigned
-    countl_zero(Z<Unsigned, N2, P2> const& x);
+    countl_zero(Z<Unsigned, N2, P2> const& x) noexcept;
+
+    template <unsigned N2, Policy P2>
+    friend
+    constexpr
+    unsigned
+    countr_zero(Z<Unsigned, N2, P2> const& x) noexcept;
+
+    template <unsigned N2, Policy P2>
+    friend
+    constexpr
+    unsigned
+    popcount(Z<Unsigned, N2, P2> const& x) noexcept;
 
     template <unsigned N2>
     requires(N2 <= Nlimit)
     friend
+    constexpr
     unsigned
     detail::divu10(Z<Unsigned, N2, Wrap>& u) noexcept;
 
@@ -1013,7 +1027,19 @@ private:
     friend
     constexpr
     unsigned
-    countl_zero(Z<Unsigned, N2, P2> const& x);
+    countl_zero(Z<Unsigned, N2, P2> const& x) noexcept;
+
+    template <unsigned N2, Policy P2>
+    friend
+    constexpr
+    unsigned
+    countr_zero(Z<Unsigned, N2, P2> const& x) noexcept;
+
+    template <unsigned N2, Policy P2>
+    friend
+    constexpr
+    unsigned
+    popcount(Z<Unsigned, N2, P2> const& x) noexcept;
 
     template <unsigned N1>
     requires (N1 > Nlimit)
@@ -2362,7 +2388,7 @@ template <unsigned N, Policy P>
 constexpr
 inline
 unsigned
-countl_zero(Z<Unsigned, N, P> const& x)
+countl_zero(Z<Unsigned, N, P> const& x) noexcept
 {
     if constexpr (N <= Nlimit)
     {
@@ -2373,6 +2399,66 @@ countl_zero(Z<Unsigned, N, P> const& x)
         if (x.hi_)
             return countl_zero(x.hi_);
         return N/2 + countl_zero(x.lo_);
+    }
+}
+
+// countl_one
+
+template <unsigned N, Policy P>
+constexpr
+inline
+unsigned
+countl_one(Z<Unsigned, N, P> const& x) noexcept
+{
+    return countl_zero(~x);
+}
+
+// countr_zero
+
+template <unsigned N, Policy P>
+constexpr
+inline
+unsigned
+countr_zero(Z<Unsigned, N, P> const& x) noexcept
+{
+    if constexpr (N <= Nlimit)
+    {
+        return std::countr_zero(x.rep_);
+    }
+    else
+    {
+        if (x.lo_)
+            return countr_zero(x.lo_);
+        return N/2 + countr_zero(x.hi_);
+    }
+}
+
+// countr_one
+
+template <unsigned N, Policy P>
+constexpr
+inline
+unsigned
+countr_one(Z<Unsigned, N, P> const& x) noexcept
+{
+    return countr_zero(~x);
+}
+
+// popcount
+
+template <unsigned N, Policy P>
+constexpr
+inline
+unsigned
+popcount(Z<Unsigned, N, P> const& x) noexcept
+{
+    if constexpr (N <= Nlimit)
+    {
+        return std::popcount(x.rep_);
+    }
+    else
+    {
+        return popcount(x.hi_) + popcount(x.lo_);
     }
 }
 
@@ -2901,6 +2987,7 @@ set_high_bit(Z<S, N, P> x) noexcept
 
 template <unsigned N>
 requires(N <= Nlimit)
+constexpr
 inline
 unsigned
 divu10(Z<Unsigned, N, Wrap>& u) noexcept
@@ -2912,6 +2999,7 @@ divu10(Z<Unsigned, N, Wrap>& u) noexcept
 
 template <unsigned N>
 requires(N > Nlimit)
+constexpr
 inline
 unsigned
 divu10(Z<Unsigned, N, Wrap>& u) noexcept
@@ -3496,24 +3584,76 @@ euc_div(std::int64_t const& n, std::int64_t const& d) noexcept
     return div_t{q, R{RW{n} - RW{q}*RW{d}}};
 }
 
+template <class Num, unsigned N, Policy P>
+constexpr
+Num
+power(Num const& f, Z<Unsigned, N, P> n)
+{
+    if (n == 0)
+        return Num{1};
+    if (n == 1)
+        return f;
+    auto r = power(f, n >> 1);
+    r *= r;
+    if (n & Z<Unsigned, N, P>{1})
+        r *= f;
+    return r;
+}
+
+template <unsigned N, Policy P>
+constexpr
+Z<Unsigned, N, P>
+gcd(Z<Unsigned, N, P> x, Z<Unsigned, N, P> y) noexcept
+{
+    if (x == 0)
+        return y;
+    if (y == 0)
+        return x;
+    auto xd = countr_zero(x);
+    auto yd = countr_zero(y);
+    auto d = std::min(xd, yd);
+    x >>= xd;
+    y >>= yd;
+    while (x != y)
+    {
+        if (x > y)
+        {
+            x -= y;
+            x >>= countr_zero(x);
+        }
+        else
+        {
+            y -= x;
+            y >>= countr_zero(y);
+        }
+    }
+    return x << d;
+}
+
+template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
+requires (!(S1{} == Unsigned{} && S2{} == Unsigned{} && N1 == N2))
+constexpr
+auto
+gcd(Z<S1, N1, P> x, Z<S2, N2, P> y) noexcept
+{
+    using Ux = Z<Unsigned, N1, Wrap>;
+    using Uy = Z<Unsigned, N2, Wrap>;
+    Ux ux{x};
+    if constexpr (S1{} == Signed{})
+    {
+        if (x < 0)
+            ux = -ux;
+    }
+    Uy uy{y};
+    if constexpr (S2{} == Signed{})
+    {
+        if (y < 0)
+            uy = -uy;
+    }
+    using U = std::common_type_t<Ux, Uy>;
+    return Z<Unsigned, U::size, P>{gcd(U{ux}, U{uy})};
+}
+
 }  // namespace bbi
-
-namespace std
-{
-
-template <bbi::SignTag S, unsigned N, bbi::Policy P>
-struct make_unsigned<bbi::Z<S, N, P>>
-{
-    using type = bbi::Z<bbi::Unsigned, N, P>;
-};
-
-template <bbi::SignTag S, unsigned N, bbi::Policy P>
-struct make_signed<bbi::Z<S, N, P>>
-{
-    using type = bbi::Z<bbi::Signed, N, P>;
-};
-
-}  // namespace std
-
 
 #endif  // BBI_H
