@@ -626,6 +626,28 @@ template <unsigned N, Policy P>
 
 They behave as their std counterparts are documented, and have no failure mode.
 
+### power
+
+Raise a number to an unsigned integral power:
+
+```c++
+template <class Num, unsigned N, Policy P>
+    constexpr Num power(Num const& f, Z<Unsigned, N, P> n);
+```
+
+This raises the number `f` to the unsigned integral power `n` using repeated multiplies,
+but minimizing the number of multiplies to about log base 2 multiplies.  This algorithm
+is purposefully generic on the type of the base (`Num`).
+
+The requirements on `Num` are:
+
+* `Num{1}` has the value of 1.
+* Given two values of `Num`: `x` and `y`, `x *= y` is a valid expression and has the expected semantics.
+
+The bbi integral types meet these requirements.
+
+Overflow behavior is governed by the behavior of `Num`, not this algorithm.  There is no failure mode associated with the exponent `n`.
+
 ## Requirements
 
 Requires C++20 and:
