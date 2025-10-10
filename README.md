@@ -523,7 +523,9 @@ This operation only works when both operands have identical bbi types.  Each
 pair of bits is bitwise exclusive or\'ed into a copy and returned.  The Policy
 has no impact on the behavior of this operation.
 
-## Quotient / Remainder algorithms
+## Algorithms
+
+### Quotient / Remainder
 
 There are four namespace scope functions that can take two signed bbi integers with
 the same policy and return the quotient and remainder in a `bbi::div_t`.  These
@@ -600,6 +602,29 @@ floor_div : {3, -1}
 ceil_div  : {4, 2}
 euc_div   : {4, 2}
 ```
+
+### bit counting
+
+The following bbi namespace scope functions, inspired by the std::lib, are provided which count bits in bbi integral types:
+
+```c++
+template <unsigned N, Policy P>
+    constexpr unsigned countl_zero(Z<Unsigned, N, P> const& x) noexcept;
+
+template <unsigned N, Policy P>
+    constexpr unsigned countl_one(Z<Unsigned, N, P> const& x) noexcept;
+
+template <unsigned N, Policy P>
+    constexpr unsigned countr_zero(Z<Unsigned, N, P> const& x) noexcept;
+
+template <unsigned N, Policy P>
+    constexpr unsigned countr_one(Z<Unsigned, N, P> const& x) noexcept;
+
+template <unsigned N, Policy P>
+    constexpr unsigned popcount(Z<Unsigned, N, P> const& x) noexcept;
+```
+
+They behave as their std counterparts are documented, and have no failure mode.
 
 ## Requirements
 
