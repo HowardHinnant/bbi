@@ -32,7 +32,7 @@ main()
 }
 ```
 
-Output:
+_Output:_
 
 ```
 2 + 3 = 5
@@ -120,7 +120,7 @@ main()
 }
 ```
 
-Output:
+_Output_:
 
 ```
 16
@@ -153,7 +153,7 @@ main()
 }
 ```
 
-Output:
+_Output_:
 
 ```
 127
@@ -187,7 +187,7 @@ main()
 }
 ```
 
-Output:
+_Output_:
 
 ```
 terminating due to uncaught exception of type std::overflow_error:
@@ -216,7 +216,7 @@ main()
 }
 ```
 
-Output:
+_Output_:
 
 ```
 Z<Signed, 8, Terminate>{100) * Z<Signed, 8, Terminate>{100) overflowed
@@ -248,7 +248,7 @@ main()
 }
 ```
 
-Output:
+_Output_:
 
 ```
 10000
@@ -304,7 +304,7 @@ main()
 }
 ```
 
-Output:
+_Output_:
 
 ```
 -1
@@ -327,11 +327,41 @@ main()
 }
 ```
 
-Output:
+_Output_:
 
 ```
 terminating due to uncaught exception of type std::overflow_error:
     Z<Signed, 32, Throw>(Z<Signed, 64, Throw>(9223372036854775807)) overflowed
+```
+
+An explicit conversion from `std::string_view` to a bbi integral type is allowed,
+as well as an explicit conversion from a bbi integral type to `std::string`.  This
+facilitates I/O.
+
+_Example:_
+
+```c++
+#include "bbi.h"
+#include <iostream>
+#include <string>
+#include <string_view>
+
+int
+main()
+{
+    using namespace bbi::term;
+    i8 i{"127"};
+    std::cout << i << " as string: " << std::string{i} << '\n';
+    i8 j{"128"};
+}
+```
+
+_Output_:
+
+```
+127 as string: 127
+Z<Signed, 8, Terminate>{120} + Z<Signed, 8, Terminate>{8} overflowed
+libc++abi: terminating
 ```
 
 ### Implicit conversions
@@ -347,7 +377,7 @@ i8  i{};
 u32 u = i;
 ```
 
-Output:
+_Output_:
 
 ```
 error: no viable conversion from 'Z<bbi::Signed, 8, [...]>' to 'Z<bbi::Unsigned, 32, [...]>'
