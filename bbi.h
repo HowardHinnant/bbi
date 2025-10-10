@@ -3654,6 +3654,42 @@ gcd(Z<S1, N1, P> x, Z<S2, N2, P> y) noexcept
     return Z<Unsigned, U::size, P>{gcd(U{ux}, U{uy})};
 }
 
+template <unsigned N, Policy P>
+constexpr
+Z<Unsigned, N, P>
+lcm(Z<Unsigned, N, P> x, Z<Unsigned, N, P> y) noexcept
+{
+    if (x == 0)
+        return x;
+    if (y == 0)
+        return y;
+    return x/gcd(x, y) * y;
+}
+
+template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
+requires (!(S1{} == Unsigned{} && S2{} == Unsigned{} && N1 == N2))
+constexpr
+auto
+lcm(Z<S1, N1, P> x, Z<S2, N2, P> y) noexcept
+{
+    using Ux = Z<Unsigned, N1, Wrap>;
+    using Uy = Z<Unsigned, N2, Wrap>;
+    Ux ux{x};
+    if constexpr (S1{} == Signed{})
+    {
+        if (x < 0)
+            ux = -ux;
+    }
+    Uy uy{y};
+    if constexpr (S2{} == Signed{})
+    {
+        if (y < 0)
+            uy = -uy;
+    }
+    using R = Z<Unsigned, std::common_type_t<Ux, Uy>::size, P>;
+    return lcm(R{ux}, R{uy});
+}
+
 }  // namespace bbi
 
 #endif  // BBI_H
