@@ -648,6 +648,63 @@ The bbi integral types meet these requirements.
 
 Overflow behavior is governed by the behavior of `Num`, not this algorithm.  There is no failure mode associated with the exponent `n`.
 
+### gcd / lcm
+
+These functions compute the greatest common divisor of two bbi integral types, and the least common denominator:
+
+```c++
+template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
+    constexpr auto gcd(Z<S1, N1, P> x, Z<S2, N2, P> y) noexcept;
+
+template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
+    constexpr auto lcm(Z<S1, N1, P> x, Z<S2, N2, P> y) noexcept;
+```
+
+Unlike the `std` specification, these functions always return an unsigned bbi integer.  This result is computed by first mapping each argument to unsigned, with the same bit width and policy, and then returning the `common_type` of those types.
+
+In contrast the `std` specification returns the `common_type` of the two arguments.
+
+The result is that the `std` specification can't always return the correct value.  [The precondition on these functions in the standard](https://eel.is/c++draft/numeric.ops.gcd#2) reflect this fact by banning inputs for which the output can not be correct.
+
+> _Preconditions:_ `|m|` and `|n|` are representable as a value of `common_type_t<M, N>`.  
+> [_Note 1:_ These requirements ensure, for example, that `gcd(m, m) = |m|` is representable as a value of type `M`. - _end note_]
+
+The `bbi` versions have no preconditions and always return the correct value.
+
+_Example:_
+
+```c++
+{
+using namespace bbi::term;
+i8 i{-128};
+i8 j{-128};
+auto k = gcd(i, j);
+std::cout << "bbi::gcd(" << i << ", " << j << ") = " << k << '\n';
+}
+{
+std::int8_t i = -128;
+std::int8_t j = -128;
+auto k = std::gcd(i, j);
+std::cout << "std::gcd(" << +i << ", " << +j << ") = " << +k << '\n';
+}
+```
+_Output:_
+
+```
+bbi::gcd(-128, -128) = 128
+std::gcd(-128, -128) = -128
+```
+
+The `std` output above is actually undefined behavior, as it violates the precondition.  The `bbi` version is well-defined and gives the correct output.  The `bbi` output has type `u8`.  The `std` output has type `int8_t`.
+
+Typically once the `gcd` is found, it is used to divide the arguments.  The recommended procedure for that is:
+
+```c++
+i = i8{i/k};
+```
+
+That is, do the division heterogeneously `i/k`, which if `i` is signed, will be done with a higher bit width, and then convert the result back to the type of `i`.  The result is guaranteed to fit in `i`, no matter what the value the value of `k` turned out to be, because `k` is guaranteed to be in the range `[1, |i|]`.
+
 ## Requirements
 
 Requires C++20 and:
