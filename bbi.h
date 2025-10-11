@@ -3192,7 +3192,7 @@ from_string_view(std::string_view const s)
     if (!('0' <= c && c <= '9'))
         throw_error();
     ++i;
-    Z z{c - '0'};
+    Z z{-(c - '0')};
     while (true)
     {
         if (i == s.size())
@@ -3201,9 +3201,9 @@ from_string_view(std::string_view const s)
         if (!('0' <= c && c <= '9'))
             break;
         ++i;
-        z = z*Z{10} + Z{c - '0'};
+        z = z*Z{10} + Z{-(c - '0')};
     }
-    if (neg)
+    if (!neg)
         z = -z;
     return z;
 }
