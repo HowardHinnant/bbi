@@ -3698,6 +3698,31 @@ lcm(Z<S1, N1, P> x, Z<S2, N2, P> y) noexcept
     return lcm(R{ux}, R{uy});
 }
 
+template <unsigned N, Policy P>
+constexpr
+Z<Unsigned, N, P>
+fac(Z<Unsigned, N, P> x)
+{
+    auto constexpr one = Z<Unsigned, N, P>{1};
+    auto r = one;
+    if (x > one)
+    {
+        for (; x != one; --x)
+            r *= x;
+    }
+    return r;
+}
+
+template <unsigned N, Policy P>
+constexpr
+Z<Signed, N, P>
+fac(Z<Signed, N, P> x)
+{
+    using Zu = Z<Unsigned, N, P>;
+    using Zs = Z<Signed, N, P>;
+    return Zs{fac(Zu{x})};
+}
+
 }  // namespace bbi
 
 #endif  // BBI_H

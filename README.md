@@ -705,6 +705,141 @@ i = i8{i/k};
 
 That is, do the division heterogeneously `i/k`, which if `i` is signed, will be done with a higher bit width, and then convert the result back to the type of `i`.  The result is guaranteed to fit in `i`, no matter what the value the value of `k` turned out to be, because `k` is guaranteed to be in the range `[1, |i|]`.
 
+### factorial
+
+```c++
+template <unsigned N, Policy P>
+    constexpr Z<Unsigned, N, P> fac(Z<Unsigned, N, P> x);
+
+template <unsigned N, Policy P>
+    constexpr Z<Signed, N, P>   fac(Z<Signed, N, P> x);
+```
+
+The unsigned version computes the factorial just as expected, except that it obeys
+whatever overflow policy is in use: `Wrap`, `Saturate`, `Terminate` or `Throw`.
+
+_Example:_
+
+```c++
+using namespace bbi::term;
+cout << fac(u16{4}) << '\n';
+cout << fac(u16{8}) << '\n';
+cout << fac(u16{9}) << '\n';
+```
+
+_Output:_
+
+```
+24
+40320
+Z<Unsigned, 16, Terminate>{60480} * Z<Unsigned, 16, Terminate>{3} overflowed
+libc++abi: terminating
+```
+
+_Example:_
+
+```c++
+using namespace bbi::sat;
+cout << fac(u16{4}) << '\n';
+cout << fac(u16{8}) << '\n';
+cout << fac(u16{9}) << '\n';
+```
+
+_Output:_
+
+```
+24
+40320
+65535
+```
+
+In the first example `fac(u16{9})` causes a termination because `9! == 362'880`.  But
+in the second example `fac(u16{9})` saturates to `65535`.
+
+The signed version of `fac` works by explicitly converting its argument to unsigned
+with equivalent width and policy, computing the factorial of that, and then explicitly
+converting back to the original signed type.
+
+The overflow policy governs the result in three places:
+
+1.  The conversion of the input to unsigned will overflow if the input is negative.
+
+_Example:_
+
+```c++
+    using namespace bbi::sat;
+    cout << fac(i16{-2}) << '\n';
+```
+
+_Output:_
+
+```
+1
+```
+
+The input of `-2` saturated to a value of `0` when converted to unsigned, and thus 
+returned `0! == 1`.
+
+_Example:_
+
+```c++
+    using namespace bbi::term;
+    cout << fac(i16{-2}) << '\n';
+```
+
+_Output:_
+
+```
+Z<Unsigned, 16, Terminate>{Z<Signed, 16, Terminate>{-2}} overflowed
+libc++abi: terminating
+```
+
+The input of `-2` caused a termination upon conversion to unsigned.
+
+
+2.  The computation of the factorial may overflow precisely as in the unsigned case.
+
+_Example:_
+
+```c++
+using namespace bbi::sat;
+cout << fac(i8{6}) << '\n';
+```
+
+_Output:_
+
+```
+127
+```
+
+`6! == 720` which overflows the signed 8 bit integer.
+
+3.  The conversion from the unsigned result to the signed result may overflow.
+
+_Example:_
+
+```c++
+using namespace bbi::sat;
+cout << fac(i16{8}) << '\n';
+```
+
+_Output:_
+
+```
+32767
+```
+
+`8! == 40320` which does not overflow the 16 bit unsigned type where it was computed, but
+does overflow in the conversion back to a signed 16 bit integer.
+
+Even though it does not make sense to compute the factorial of a negative value, it would
+be terribly inconvenient to not have the signed version of factorial.  This would require
+explicitly converting to unsigned to compute the factorial and then converting back to
+signed.  Factorials of signed integers are routinely required in real world applications
+such as evaluating a Taylor's series.  The signed version of factorial simply wraps these
+conversions up into a convenience function, while maintaining whatever overflow policy you
+prefer.
+
 ## Requirements
 
 Requires C++20 and:
