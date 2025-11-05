@@ -223,6 +223,14 @@ concept NoexceptFromZ =
     (typename Z1::policy{} != Throw{}) ||
     ValuePreservingConversion<typename Z1::sign, Z1::size, typename Z2::sign, Z2::size>;
 
+template <class T>
+struct isz : std::false_type {};
+
+template <SignTag S, unsigned N, Policy P, bool B>
+struct isz<Z<S, N, P, B>> : std::true_type {};
+
+template <class T>
+concept isZ = isz<T>::value;
 
 }  // namespace detail
 
