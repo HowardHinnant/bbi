@@ -775,6 +775,8 @@ public:
             noexcept(detail::NoexceptFromZ<Z, Z<S2, N2, P2>>)
             : Z{Z<S2, size*2, policy>{x}} {}
 
+    explicit constexpr Z(uhalf_t hi, uhalf_t lo) noexcept : lo_{lo}, hi_{hi} {} 
+
     explicit constexpr Z(std::string_view s);
     explicit operator std::string() const;
 
@@ -834,6 +836,9 @@ public:
         {*this = *this ^ y; return *this;}
     constexpr Z& operator|=(Z const& y) noexcept(policy{} != Throw{})
         {*this = *this | y; return *this;}
+
+    constexpr uhalf_t low() const noexcept {return lo_;}
+    constexpr uhalf_t high() const noexcept {return hi_;}
 
 private:
     template <SignTag S2, unsigned N2, Policy P2, bool>
