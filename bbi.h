@@ -3186,34 +3186,63 @@ from_string_view(std::string_view const s)
     unsigned i = 0;
     if (i == s.size())
         throw_error();
-    bool neg = false;
-    auto c = s[i];
-    if (c == '-' || c == '+')
+    if constexpr (typename Z::sign{} == Signed{})
     {
-        ++i;
-        if (c == '-')
-            neg = true;
-        if (i == s.size())
-            throw_error();
-        c = s[i];
-    }
-    if (!('0' <= c && c <= '9'))
-        throw_error();
-    ++i;
-    Z z{-(c - '0')};
-    while (true)
-    {
-        if (i == s.size())
-            break;
-        c = s[i];
+        bool neg = false;
+        auto c = s[i];
+        if (c == '-' || c == '+')
+        {
+            ++i;
+            if (c == '-')
+                neg = true;
+            if (i == s.size())
+                throw_error();
+            c = s[i];
+        }
         if (!('0' <= c && c <= '9'))
-            break;
+            throw_error();
         ++i;
-        z = z*Z{10} + Z{-(c - '0')};
+        Z z{-(c - '0')};
+        while (true)
+        {
+            if (i == s.size())
+                break;
+            c = s[i];
+            if (!('0' <= c && c <= '9'))
+                break;
+            ++i;
+            z = z*Z{10} + Z{-(c - '0')};
+        }
+        if (!neg)
+            z = -z;
+        return z;
     }
-    if (!neg)
-        z = -z;
-    return z;
+    else
+    {
+        auto c = s[i];
+        if (c == '+')
+        {
+            ++i;
+            if (i == s.size())
+                throw_error();
+            c = s[i];
+        }
+        if (!('0' <= c && c <= '9'))
+            throw_error();
+        ++i;
+        Z z{c - '0'};
+        while (true)
+        {
+            if (i == s.size())
+                break;
+            c = s[i];
+            if (!('0' <= c && c <= '9'))
+                break;
+            ++i;
+            z = z*Z{10} + Z{c - '0'};
+        }
+        return z;
+    }
 }
 
 }  // namespace detail
