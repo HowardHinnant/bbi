@@ -840,6 +840,78 @@ such as evaluating a Taylor's series.  The signed version of factorial simply wr
 conversions up into a convenience function, while maintaining whatever overflow policy you
 prefer.
 
+### Binomial Coefficients
+
+The [binomial coefficients](https://en.wikipedia.org/wiki/Binomial_coefficient) are the
+positive integers that occur as coefficients in the [binomial
+theorem](https://en.wikipedia.org/wiki/Binomial_theorem).  They are often represented
+as two non-negative integers `n` over `k`, but without a division operator, and inside
+of parentheses:
+
+```
+/n\
+\k/
+```
+
+The result is a positive integer which can be computed by
+
+```
+            n!
+/n\  =   --------
+\k/      k!(n-k)!
+```
+
+
+They tend to pop up in a number of places and are thus a useful addition to this
+library:
+
+```c++
+template <unsigned Nx, unsigned Ny, Policy P>
+constexpr
+auto
+binomial_coefficient(Z<Unsigned, Nx, P> n, Z<Unsigned, Ny, P> k);
+
+template <SignTag Sx, unsigned Nx, Policy P, SignTag Sy, unsigned Ny>
+constexpr
+auto
+binomial_coefficient(Z<Sx, Nx, P> n, Z<Sy, Ny, P> k);
+```
+
+The signed version converts both arguments to unsigned, does the computation in
+unsigned, and then converts the result back to signed.  This is simply a convenience
+function to wrap the signed/unsigned conversions.  If an error checking policy is used
+and either argument is negative, the conversion to unsigned will signal an error.
+
+If `k > n`, an `assert` fires as long as `NDEBUG` is not defined.  That is, `n >= k` is
+a precondition.
+
+Overflow can easily occur if `n` is greater than the bit width of the arguments.  So the
+use of an error checking policy is encouraged for debug builds.
+
+The implementation of these functions is structured such that if the final result will
+fit within the `common_type` of the two arguments, then there will be no overflow in an
+intermediate result within the computation.
+
+_Example:_
+
+```c++
+using namespace bbi::term;
+u512 n = 512u;
+u512 k = 256u;
+cout << binomial_coefficient(n, k) << '\n';
+```
+
+_Output:_
+
+```
+472553303154964924989004370051186389478210715642481882577328859153566070336566100844650299634054239969857431328433974960326174706663509667348266572071494
+```
+
+_Note:_
+
+The example above does not overflow, and returns the correct answer, even though
+`fac(n)` _does_ overflow.
+
 ## Requirements
 
 Requires C++20 and:

@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <bit>
+#include <cassert>
 #include <charconv>
 #include <climits>
 #include <cstdint>
@@ -3755,6 +3756,44 @@ fac(Z<Signed, N, P> x)
     using Zu = Z<Unsigned, N, P>;
     using Zs = Z<Signed, N, P>;
     return Zs{fac(Zu{x})};
+}
+
+template <unsigned Nx, unsigned Ny, Policy P>
+constexpr
+auto
+binomial_coefficient(Z<Unsigned, Nx, P> n, Z<Unsigned, Ny, P> k)
+{
+    assert(n >= k);
+    using V = std::common_type_t<Z<Unsigned, Nx, P>,
+                                 Z<Unsigned, Ny, P>>;
+    V nc{n};
+    V kc{k};
+    if (kc > nc/V{2})
+        kc = nc - kc;
+    if (kc == V{0})
+        return V{1};
+    auto r = nc;
+    --nc;
+    for (auto j = V{2}; j <= kc; ++j, --nc)
+    {
+        auto g = gcd(r, j);
+        r /= g;
+        auto t = nc / (j / g);
+        r *= t;
+    }
+    return r;
+}
+
+template <SignTag Sx, unsigned Nx, Policy P, SignTag Sy, unsigned Ny>
+constexpr
+auto
+binomial_coefficient(Z<Sx, Nx, P> n, Z<Sy, Ny, P> k)
+{
+    using Ux = Z<Unsigned, Nx, P>;
+    using Uy = Z<Unsigned, Ny, P>;
+    using VU = std::common_type_t<Ux, Uy>;
+    using V = Z<Signed, VU::size, P>;
+    return V{binomial_coefficient(VU{n}, VU{k})};
 }
 
 }  // namespace bbi
