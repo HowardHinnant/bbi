@@ -317,6 +317,8 @@ rational<N>::rational(std::string_view s)
     {
         throw std::runtime_error('\"' + std::string(s) + "\" is not a valid rational");
     };
+    if (s.empty())
+        throw_error();
     if (s == "nan")
     {
         num_ = value_type{0};
@@ -336,10 +338,10 @@ rational<N>::rational(std::string_view s)
         return;
     }
     auto i = s.find("/");
-    if (i == std::string_view::npos)
-        throw_error();
     value_type num{s.substr(0, i)};
-    value_type den{s.substr(i+1)};
+    value_type den{1};
+    if (i != std::string_view::npos)
+        den = value_type{s.substr(i+1)};
     *this = rational{num, den};
 }
 
