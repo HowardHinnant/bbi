@@ -919,3 +919,7 @@ Requires C++20 and:
 * gcc 10.1 or later
 * clang 17.0.1 or later (Apple clang 16.0.0 or later)
 * VS 2022 17.14 or later (not yet released as of Jan 1, 2025)
+
+## Projects
+
+* [A rational number library](proj/rational.md)
