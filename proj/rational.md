@@ -224,9 +224,21 @@ infinity or nan.
 Conversions from standard integers and `bbi` integers are allowed.  If those conversions
 are guaranteed to be lossless, they are implicit, else they are explicit.
 
-Explicit conversions from `std::string_view` are allowed assuming the string is of the
-form `integer/integer`.  The special strings `"nan"`, `"inf"`, and `"-inf"` are also
-recognized.
+Explicit conversions from `std::string_view` are allowed assuming the string is of one
+of the following forms:
+
+* `"numerator"` : creates a value with a numerator of the indicated value.  The
+denominator is set to 1.
+* `"numerator/denominator"` : creates a value with a numerator of the indicated value and
+denominator of the indicated values.  They will be reduced to lowest terms during the
+construction.
+* `"[a0]"` : creates a value with `a0` as the numerator and 1 as the denominator.
+* `"[a0;]"` : creates a value with `a0` as the numerator and 1 as the denominator.
+* `"[a0; a1, a2, ...]"` : creates a value equivalent to the simple continued fraction
+`[a0; a1, a2, ...]`.  White space is ignored.
+* `"inf"` : creates infinity
+* `"-inf"` : creates -infinity
+* `"nan"` : creates nan
 
 Explicit conversions to `std::string` are allowed and follow the syntax of the explicit
 conversions from `std::string_view`.
@@ -362,6 +374,16 @@ fac(rational<N> x);
 Returns the factorial of `x`.  If x is not a non-negative integer, returns `nan`.  Returns
 `inf` if the result is outside the range of `rational<N>`.  This is basically a
 convenience function that finds use in Taylor Series applications.
+
+```c++
+template <unsigned N>
+std::string
+cf_string(rational<N> r);
+```
+
+Prints the value `r` as a simple continued fraction of the from `[a0; a1, a2, ...]`. This
+is the inverse of the constructor that takes a `std::string_view` containing
+`"[a0; a1, a2, ...]"`.
 
 ### Constants
 

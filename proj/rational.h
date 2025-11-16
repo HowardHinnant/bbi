@@ -317,8 +317,87 @@ rational<N>::rational(std::string_view s)
     {
         throw std::runtime_error('\"' + std::string(s) + "\" is not a valid rational");
     };
+    auto skipws = [&s](unsigned j)
+        {
+            while (j != s.size() && std::isspace(s[j]))
+                ++j;
+            return j;
+        };
     if (s.empty())
         throw_error();
+    if (s[0] == '[')
+    {
+        auto e = s.find(']', 1);
+        if (e == std::string_view::npos)
+            throw_error();
+        auto n = s.find(';', 1);
+        unsigned i = 1;
+        if (n == std::string_view::npos)
+        {
+            i = skipws(i);
+            num_ = value_type{s.substr(i, e)};
+            den_ = value_type{1};
+            return;
+        }
+        i = skipws(i);
+        value_type a{s.substr(i, n)};
+        value_type p{a};
+        value_type q{1};
+
+        value_type pm2{1};
+        value_type pm1 = p;
+        value_type qm2{0};
+        value_type qm1 = q;
+        i = n+1;
+
+        auto constexpr M = std::numeric_limits<value_type>::max();
+
+        while (true)
+        {
+            if (i == e)
+                break;
+            n = s.find(',', i);
+            if (n == std::string_view::npos)
+                n = e;
+            i = skipws(i);
+            a = value_type{s.substr(i, n)};
+            if (a < 0)
+                throw_error();
+            if (pm2 > 0)
+            {
+                if (pm1 > (M - pm2)/a)
+                    break;
+            }
+            else
+            {
+                if (pm1 > M/a)
+                    break;
+            }
+            if (qm2 > 0)
+            {
+                if (qm1 > (M - qm2)/a)
+                    break;
+            }
+            else
+            {
+                if (qm1 > M/a)
+                    break;
+            }
+            p = a*pm1 + pm2;
+            q = a*qm1 + qm2;
+            if (n == e)
+                break;
+            i = n+1;
+            pm2 = pm1;
+            pm1 = p;
+            qm2 = qm1;
+            qm1 = q;
+        }
+
+        num_ = p;
+        den_ = q;
+        return;
+    }
     if (s == "nan")
     {
         num_ = value_type{0};
@@ -3530,6 +3609,31 @@ acsc(rational<N> x) noexcept
     if (x == R{0})
         return R{0,0};
     return asin(x.reciprocal());
+}
+
+template <unsigned N>
+std::string
+cf_string(rational<N> r)
+{
+    std::string s(1, '[');
+    auto div = floor_div(r.num(), r.den());
+    s += std::string(div.quot);
+    if (div.rem != 0)
+    {
+        s += "; ";
+        r = rational<N>{r.den(), div.rem};
+        while (true)
+        {
+            div = floor_div(r.num(), r.den());
+            s += std::string(div.quot);
+            if (div.rem == 0)
+                break;
+            s += ", ";
+            r = rational<N>{r.den(), div.rem};
+        }
+    }
+    s += ']';
+    return s;
 }
 
 }  // namespace bbi
