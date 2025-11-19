@@ -23,10 +23,10 @@ also have the negative effect of increasing both compile times, and the run time
 resultant executable.  Use with caution.
 
 `rational<N>` is composed of two signed `bbi` integral values with a bit width of `N`,
-holding the numerator and denominator.  The default is to have the overflow behavior
-of these underlying integral types to be `Terminate`.  However when `NDEBUG` is defined,
-the overflow policy switches to `Wrap`.  If the `terminate` is called within `rational`,
-this represents a bug in `rational`.
+holding the numerator and denominator.  The default is to have the overflow behavior of
+these underlying integral types to be `Terminate`.  However when `NDEBUG` is defined, the
+overflow policy switches to `Wrap`.  If `terminate` is called within `rational`, this
+represents a bug in `rational`.
 
 No operation on a `rational` should cause the numerator or denominator to overflow.
 Instead the `rational` can hold values of +/- infinity and nan.  Therefore a future
@@ -109,7 +109,7 @@ At 16 bits the output is the same as the boost library:
 63/50 + 5/72 = 2393/1800 or about 1.32944
 ```
 
-But change to 8 bitss:
+But change to 8 bits:
 
 ```c++
     using R = bbi::rational<8>;
@@ -275,6 +275,17 @@ _Output_:
 ```
 103/86
 ```
+
+_Challenge:_
+
+Find a fraction with numerator in the range `[-127, 127]` and denominator in the range
+`[0, 127]`, whose absolute difference from <sup>600</sup>/<sub>501</sub> is less than
+`abs(`<sup>600</sup>/<sub>501</sub> - <sup>103</sup>/<sub>86</sub>`)`.  That difference,
+by the way, is <sup>1</sup>/<sub>14362</sub>.
+
+_Conjecture:_
+
+You won\'t find one.
 
 ## Arithmetic
 
