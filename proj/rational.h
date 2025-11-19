@@ -313,9 +313,22 @@ template <unsigned N>
 constexpr
 rational<N>::rational(std::string_view s)
 {
-    auto const throw_error = [&s]()
+/*
+    We need V2 saturate to enable setting *this to infinity when too-high numbers are
+    parsed.  V1, with any overflow mode, won't enable this functionality unless
+    a throw catch is used around throw mode.
+    
+    Is V2 for a0 followed by V1-saturate sufficient?  Would it gain anything?
+
+    Need to tighten up detection of formatting errors and throwing on them.  "[3,; "
+    should be a parse error worthy of throw.  Do we need another API that exposes
+    how many characters a parsed Z has taken?  Maybe Z{string_view s, unsigned& i) where
+    i is input/output to the constructor?! 
+*/
+    auto const throw_error = [&s](unsigned j)
     {
-        throw std::runtime_error('\"' + std::string(s) + "\" is not a valid rational");
+        throw std::runtime_error("\n\"" + std::string(s) + "\" is not a valid rational\n"
+                               + std::string(j+1, ' ') + "^\n");
     };
     auto skipws = [&s](unsigned j)
         {
@@ -324,104 +337,92 @@ rational<N>::rational(std::string_view s)
             return j;
         };
     if (s.empty())
-        throw_error();
+        throw_error(0);
+    using R = rational<N>;
+    using V = typename R::value_type;
+    using R2 = rational<2*N>;
+    using V2 = typename R2::value_type;
+    using signed_parse_type = Z<Signed, V2::size, Saturate>;
+    signed_parse_type constexpr M{std::numeric_limits<V2>::max()};
     if (s[0] == '[')
     {
+        using unsigned_parse_type = Z<Unsigned, V2::size, Saturate>;
         auto e = s.find(']', 1);
         if (e == std::string_view::npos)
-            throw_error();
-        auto n = s.find(';', 1);
-        unsigned i = 1;
-        if (n == std::string_view::npos)
+            throw_error(s.size());
+        unsigned i = skipws(1);
+        signed_parse_type a{s.substr(i), i};
+        bool neg = false;
+        if (a < 0)
         {
-            i = skipws(i);
-            num_ = value_type{s.substr(i, e)};
-            den_ = value_type{1};
-            return;
+            a = -a;
+            neg = true;
         }
+        signed_parse_type p{a};
+        signed_parse_type q{1};
+
+        signed_parse_type pm2{1};
+        signed_parse_type pm1 = p;
+        signed_parse_type qm2{0};
+        signed_parse_type qm1 = q;
         i = skipws(i);
-        value_type a{s.substr(i, n)};
-        value_type p{a};
-        value_type q{1};
+        if (i != e && s[i] == ';')
+            i = skipws(i+1);
 
-        value_type pm2{1};
-        value_type pm1 = p;
-        value_type qm2{0};
-        value_type qm1 = q;
-        i = n+1;
-
-        auto constexpr M = std::numeric_limits<value_type>::max();
-
-        while (true)
+        while (i != e)
         {
-            if (i == e)
+            unsigned_parse_type au{s.substr(i), i};
+            if (au == 0)
+                throw_error(i-1);
+            if (au > M)
                 break;
-            n = s.find(',', i);
-            if (n == std::string_view::npos)
-                n = e;
-            i = skipws(i);
-            a = value_type{s.substr(i, n)};
-            if (a < 0)
-                throw_error();
-            if (pm2 > 0)
-            {
-                if (pm1 > (M - pm2)/a)
-                    break;
-            }
-            else
-            {
-                if (pm1 > M/a)
-                    break;
-            }
-            if (qm2 > 0)
-            {
-                if (qm1 > (M - qm2)/a)
-                    break;
-            }
-            else
-            {
-                if (qm1 > M/a)
-                    break;
-            }
+            a = signed_parse_type{au};
+            if (pm1 > (M - pm2)/a)
+                break;
+            if (qm1 > (M - qm2)/a)
+                break;
             p = a*pm1 + pm2;
             q = a*qm1 + qm2;
-            if (n == e)
+            i = skipws(i);
+            if (i == e)
                 break;
-            i = n+1;
+            if (s[i] == ',')
+                i = skipws(i+1);
+            else
+                throw_error(i);
             pm2 = pm1;
             pm1 = p;
             qm2 = qm1;
             qm1 = q;
         }
 
-        num_ = p;
-        den_ = q;
+        *this = R{R2{V2{neg ? -p : p}, V2{q}}};
         return;
     }
     if (s == "nan")
     {
-        num_ = value_type{0};
-        den_ = value_type{0};
+        num_ = V{0};
+        den_ = V{0};
         return;
     }
     if (s == "inf")
     {
-        num_ = value_type{1};
-        den_ = value_type{0};
+        num_ = V{1};
+        den_ = V{0};
         return;
     }
     if (s == "-inf")
     {
-        num_ = value_type{1};
-        den_ = value_type{0};
+        num_ = V{1};
+        den_ = V{0};
         return;
     }
     auto i = s.find("/");
-    value_type num{s.substr(0, i)};
-    value_type den{1};
+    signed_parse_type num{s.substr(0, i)};
+    signed_parse_type den{1};
     if (i != std::string_view::npos)
-        den = value_type{s.substr(i+1)};
-    *this = rational{num, den};
+        den = signed_parse_type{s.substr(i+1)};
+    *this = R{R2{V2{num}, V2{den}}};
 }
 
 template <unsigned N>
@@ -3616,21 +3617,29 @@ std::string
 cf_string(rational<N> r)
 {
     std::string s(1, '[');
-    auto div = floor_div(r.num(), r.den());
-    s += std::string(div.quot);
-    if (div.rem != 0)
+    if (r.den() != 0)
     {
-        s += "; ";
-        r = rational<N>{r.den(), div.rem};
-        while (true)
+        auto div = floor_div(r.num(), r.den());
+        s += std::string(div.quot);
+        s += ';';
+        if (div.rem != 0)
         {
-            div = floor_div(r.num(), r.den());
-            s += std::string(div.quot);
-            if (div.rem == 0)
-                break;
-            s += ", ";
+            s += ' ';
             r = rational<N>{r.den(), div.rem};
+            while (true)
+            {
+                div = floor_div(r.num(), r.den());
+                s += std::string(div.quot);
+                if (div.rem == 0)
+                    break;
+                s += ", ";
+                r = rational<N>{r.den(), div.rem};
+            }
         }
+    }
+    else
+    {
+        s += std::string(r);
     }
     s += ']';
     return s;

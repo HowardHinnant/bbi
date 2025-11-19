@@ -331,6 +331,7 @@ public:
             : Z{Z<S2, size*2, policy>{x}} {}
 
     explicit constexpr Z(std::string_view s);
+    explicit constexpr Z(std::string_view s, unsigned& i);
     explicit operator std::string() const;
 
     constexpr explicit operator bool() const noexcept {return bool(rep_);}
@@ -779,6 +780,7 @@ public:
     explicit constexpr Z(uhalf_t hi, uhalf_t lo) noexcept : lo_{lo}, hi_{hi} {} 
 
     explicit constexpr Z(std::string_view s);
+    explicit constexpr Z(std::string_view s, unsigned& i);
     explicit operator std::string() const;
 
     constexpr explicit operator bool() const noexcept {return bool(hi_ | lo_);}
@@ -3183,7 +3185,7 @@ namespace detail
 template <class Z>
 constexpr
 Z
-from_string_view(std::string_view const s)
+from_string_view(std::string_view const s, unsigned* count = nullptr)
 {
     auto const throw_error = [&s]()
     {
@@ -3221,6 +3223,8 @@ from_string_view(std::string_view const s)
         }
         if (!neg)
             z = -z;
+        if (count)
+            *count += i;
         return z;
     }
     else
@@ -3247,6 +3251,8 @@ from_string_view(std::string_view const s)
             ++i;
             z = z*Z{10} + Z{c - '0'};
         }
+        if (count)
+            *count += i;
         return z;
     }
 }
@@ -3261,8 +3267,20 @@ Z<S, N, P, true>::Z(std::string_view s)
 
 template <SignTag S, unsigned N, Policy P>
 constexpr
+Z<S, N, P, true>::Z(std::string_view s, unsigned& i)
+    : Z{detail::from_string_view<Z>(s, &i)}
+    {}
+
+template <SignTag S, unsigned N, Policy P>
+constexpr
 Z<S, N, P, false>::Z(std::string_view s)
     : Z{detail::from_string_view<Z>(s)}
+    {}
+
+template <SignTag S, unsigned N, Policy P>
+constexpr
+Z<S, N, P, false>::Z(std::string_view s, unsigned& i)
+    : Z{detail::from_string_view<Z>(s, &i)}
     {}
 
 template <SignTag S, unsigned N, Policy P>
