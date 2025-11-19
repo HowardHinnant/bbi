@@ -313,18 +313,6 @@ template <unsigned N>
 constexpr
 rational<N>::rational(std::string_view s)
 {
-/*
-    We need V2 saturate to enable setting *this to infinity when too-high numbers are
-    parsed.  V1, with any overflow mode, won't enable this functionality unless
-    a throw catch is used around throw mode.
-    
-    Is V2 for a0 followed by V1-saturate sufficient?  Would it gain anything?
-
-    Need to tighten up detection of formatting errors and throwing on them.  "[3,; "
-    should be a parse error worthy of throw.  Do we need another API that exposes
-    how many characters a parsed Z has taken?  Maybe Z{string_view s, unsigned& i) where
-    i is input/output to the constructor?! 
-*/
     auto const throw_error = [&s](unsigned j)
     {
         throw std::runtime_error("\n\"" + std::string(s) + "\" is not a valid rational\n"
