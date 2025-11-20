@@ -498,3 +498,14 @@ _Output:_
 ```
 45
 ```
+
+### Log functions
+
+```c++
+template <unsigned N>
+constexpr
+rational<N>
+log(bbi::rational<N> x) noexcept
+```
+
+Returns the natural logirthm of `x`.  If x < 0, returns nan.  If x == 0 returns -inf.
