@@ -4,6 +4,7 @@
 #include "bbi.h"
 #include <cassert>
 #include <ostream>
+#include <ratio>
 #include <string>
 #include <string_view>
 
@@ -98,6 +99,12 @@ public:
     template <detail::OperatesWithRational I>
         explicit(!std::is_convertible_v<I, value_type>)
         constexpr rational(I i) noexcept;
+
+    template <std::intmax_t Nr, std::intmax_t Dr>
+        explicit(!(-std::numeric_limits<value_type>::max() <= Nr &&
+                   Nr <= std::numeric_limits<value_type>::max() &&
+                   Dr <= std::numeric_limits<value_type>::max()))
+        constexpr rational(std::ratio<Nr, Dr> r) noexcept;
 
     explicit constexpr rational(std::string_view s);
 
@@ -306,6 +313,14 @@ rational<N>::rational(I i) noexcept
     : rational{std::common_type_t<rational, I>{
         typename std::common_type_t<rational, I>::value_type{i},
         typename std::common_type_t<rational, I>::value_type{1}}}
+{
+}
+
+template <unsigned N>
+template <std::intmax_t Nr, std::intmax_t Dr>
+constexpr
+rational<N>::rational(std::ratio<Nr, Dr> r) noexcept
+    : rational{rational<sizeof(std::intmax_t)*CHAR_BIT>{r.num, r.den}}
 {
 }
 

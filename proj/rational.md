@@ -243,6 +243,33 @@ construction.
 Explicit conversions to `std::string` are allowed and follow the syntax of the explicit
 conversions from `std::string_view`.
 
+Conversions from `std::ratio` to `rational` are provided.  The conversion is implicit
+if value-preserving else explicit.  Conversions in the reverse direction must be handled
+by explicit converions of the numerator and denominator to `std::intmax_t`.
+
+_Example:_
+
+```c++
+#include "proj/rational.h"
+#include <iostream>
+
+int
+main()
+{
+    bbi::rational<32> constexpr r = std::micro{};
+    std::cout << r << '\n';
+    using R = std::ratio<std::intmax_t{r.num()}, std::intmax_t{r.den()}>;
+    std::cout << R::num << '/' << R::den << '\n';
+}
+```
+
+_Output:_
+
+```
+1/1000000
+1/1000000
+```
+
 ## Other constructors
 
 The default constructor results in a `nan` value.  Such values remain as nan until
