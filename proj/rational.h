@@ -3618,31 +3618,36 @@ acsc(rational<N> x) noexcept
 template <unsigned N>
 constexpr
 rational<N>
-log(bbi::rational<N> x) noexcept
+log(bbi::rational<N> xa) noexcept
 {
     using R = rational<N>;
     using V = typename R::value_type;
-    using R2 = rational<2*R::size>;
-    using V2 = typename R2::value_type;
-    if (x < 0)
+    using Vu = Z<Unsigned, V::size, typename V::policy>;
+    if (xa < 0)
         return R{V{0}, V{0}};
-    if (x == 0)
+    if (xa == 0)
         return R{V{-1}, V{0}};
-    R2 y0 = (x - V2{1}) / (x + V2{1});
-    R2 y = y0;
-    V2 j{3};
-    R2 y02 = y0*y0;
-    R2 y1 = y0*y02;
+
+    // Scale by dividing xa by e^k
+    // Estimate k to make xa/e^k close to 1
+    auto k = (int(countl_zero(Vu{xa.den()})) - int(countl_zero(Vu{xa.num()}))) * 61 / 88;
+    auto x = xa/power(e<N>, Z<Signed, 32, Wrap>{k});
+
+    R y0 = (x - V{1}) / (x + V{1});
+    R y = y0;
+    V j{3};
+    R y02 = y0*y0;
+    R y1 = y0*y02;
     while (true)
     {
         auto term = y1 / j;
         if (term == 0)
             break;
         y += term;
-        j += V2{2};
+        j += V{2};
         y1 *= y02;
     }
-    return R{2*y};
+    return V{2}*y + V{k};  // Recover scaling factor e^k
 }
 
 template <unsigned N>
