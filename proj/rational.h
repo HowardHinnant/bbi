@@ -3623,14 +3623,21 @@ log(bbi::rational<N> xa) noexcept
     using R = rational<N>;
     using V = typename R::value_type;
     using Vu = Z<Unsigned, V::size, typename V::policy>;
-    if (xa < 0)
+    if (xa.den() == 0)
+        return xa.num() > 0 ? R{1,0} : R{0,0};
+    if (xa.num() < 0)
         return R{V{0}, V{0}};
-    if (xa == 0)
+    if (xa.num() == 0)
         return R{V{-1}, V{0}};
 
     // Scale by dividing xa by e^k
     // Estimate k to make xa/e^k close to 1
+    // Given that n and d are positive, clz(d) - czl(n) is the trunc(log base 2 of n/d)
+    // log base 2 of e is 1/log base e of 2
+    // log2e<8> == 88/61
+    // So k is an integral approximation of log(x)
     auto k = (int(countl_zero(Vu{xa.den()})) - int(countl_zero(Vu{xa.num()}))) * 61 / 88;
+    // Dividing xa by e^k scales xa to be close to 1
     auto x = xa/power(e<N>, Z<Signed, 32, Wrap>{k});
 
     R y0 = (x - V{1}) / (x + V{1});
