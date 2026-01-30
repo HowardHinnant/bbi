@@ -3814,6 +3814,36 @@ binomial_coefficient(Z<Sx, Nx, P> n, Z<Sy, Ny, P> k)
     return V{binomial_coefficient(VU{n}, VU{k})};
 }
 
+template <detail::isZ Z1, detail::isZ Z2>
+constexpr
+bool
+in_range(Z2 z2) noexcept
+{
+    auto constexpr m = std::numeric_limits<Z1>::min();
+    auto constexpr M = std::numeric_limits<Z1>::max();
+    return m <= z2 && z2 <= M;
+}
+
+template <detail::StandardInteger I, detail::isZ Z>
+constexpr
+bool
+in_range(Z z) noexcept
+{
+    auto constexpr m = std::numeric_limits<I>::min();
+    auto constexpr M = std::numeric_limits<I>::max();
+    return m <= z && z <= M;
+}
+
+template <detail::isZ Z, detail::StandardInteger I>
+constexpr
+bool
+in_range(I i) noexcept
+{
+    auto constexpr m = std::numeric_limits<Z>::min();
+    auto constexpr M = std::numeric_limits<Z>::max();
+    return m <= i && i <= M;
+}
+
 }  // namespace bbi
 
 #endif  // BBI_H
