@@ -509,3 +509,34 @@ log(bbi::rational<N> x) noexcept
 ```
 
 Returns the natural logirthm of `x`.  If x < 0, returns nan.  If x == 0 returns -inf.
+
+_Example:_
+
+```c++
+#include "proj/rational.h"
+#include <iostream>
+
+int
+main()
+{
+    // print out ln 100 (4.605170185988091...) to various precisions
+    using namespace bbi;
+    std::cout << log(rational<8>{100}) << '\n';
+    std::cout << log(rational<16>{100}) << '\n';
+    std::cout << log(rational<32>{100}) << '\n';
+    std::cout << log(rational<64>{100}) << '\n';
+    std::cout << log(rational<128>{100}) << '\n';
+    std::cout << log(rational<256>{100}) << '\n';
+}
+```
+
+_Output:_
+
+```
+106/23
+6765/1469
+1989032433/431912905
+8516757013638419867/1849390287366991908
+31948466736318514632997590409687512491/6937521404426362066729795102234658176
+55674137303777746624799456551298005456495789366518901197016133984353974742657/12089485307877331041151963093522324235956815680311016584834705261838747729672
+```
