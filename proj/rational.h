@@ -428,6 +428,12 @@ rational<N>::rational(std::string_view s)
     *this = R{R2{V2{num}, V2{den}}};
 }
 
+template <detail::OperatesWithRational I>
+rational(I) -> rational<sizeof(I)*8>;
+
+template <detail::OperatesWithRational I, detail::OperatesWithRational J>
+rational(I, J) -> rational<sizeof(std::common_type_t<I, J>)*8>;
+
 template <unsigned N>
 constexpr
 rational<N>::rational(value_type num, value_type den) noexcept
