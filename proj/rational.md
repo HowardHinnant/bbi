@@ -314,6 +314,41 @@ _Conjecture:_
 
 You won\'t find one.
 
+### CTAD
+
+If you omit the template parameter with this constructor, it will infer the desired bit
+width from the integral arguments in the constructor:
+
+_Example_:
+
+```c++
+#include "type_name.h"
+#include "proj/rational.h"
+#include <iostream>
+
+int
+main()
+{
+    bbi::rational r1 = {600, 501};
+    std::cout << r1 << '\n';
+    std::cout << type_name<decltype(r1)>() << '\n';
+}
+```
+
+_Output_:
+
+```
+200/167
+bbi::rational<32>
+```
+
+_Notes_:
+
+* 200/167 is 600/501 reduced to lowest terms.
+* [Here is the definition of `type_name`.](https://stackoverflow.com/a/64490578/576911)
+* On this platform `int` literals are 32 bit.
+* Implicit conversion is enabled since the constructor becomes lossless.
+
 ## Arithmetic
 
 All four of the basic arithmetic operations are provided: `+`, `-`, `*`, `/`.  Additionally
