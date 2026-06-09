@@ -3586,6 +3586,25 @@ atan(rational<N> x) noexcept
     return y;
 }
 
+template <unsigned N1, unsigned N2>
+constexpr
+auto
+atan2(rational<N1> y, rational<N2> x) noexcept
+{
+    using R = decltype(y/x);
+    if (isnan(x) || isnan(y))
+        return R{};
+    if (x == R{0} && y == R{0})
+        return R{0};
+    auto r = atan(y/x);
+    constexpr auto N = R::size;
+    if (x >= R{0})
+        return r;
+    if (y >= R{0})
+        return r + pi<N>;
+    return r - pi<N>;
+}
+
 template <unsigned N>
 constexpr
 rational<N>

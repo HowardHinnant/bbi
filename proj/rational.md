@@ -509,6 +509,7 @@ csc
 asin
 acos
 atan
+atan2
 acot
 asec
 acsc
