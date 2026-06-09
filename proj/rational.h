@@ -653,17 +653,6 @@ operator/(Y y, rational<Nx> const& x) noexcept
     return R{y} / R{x};
 }
 
-template <unsigned Nx, unsigned Ny>
-constexpr
-auto
-operator==(rational<Nx> const& x, rational<Ny> const& y) noexcept
-{
-    using C = std::common_type_t<rational<Nx>, rational<Ny>>;
-    C const cx = x;
-    C const cy = y;
-    return cx.num() == cy.num() && cx.den() == cy.den();
-}
-
 template <unsigned Nx, detail::OperatesWithRational Y>
 constexpr
 auto
@@ -680,14 +669,6 @@ operator==(Y y, rational<Nx> const& x) noexcept
 {
     using R = std::common_type_t<rational<Nx>, Y>;
     return R{y} == R{x};
-}
-
-template <unsigned Nx, unsigned Ny>
-constexpr
-auto
-operator!=(rational<Nx> const& x, rational<Ny> const& y) noexcept
-{
-    return !(x == y);
 }
 
 template <unsigned Nx, detail::OperatesWithRational Y>
