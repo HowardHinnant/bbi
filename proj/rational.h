@@ -944,6 +944,14 @@ fac(rational<N> x)
     return r;
 }
 
+template <unsigned N>
+constexpr
+auto
+isnan(rational<N> const& x)
+{
+    return x.num() == 0 && x.den() == 0;
+}
+
 // Constants
 
 namespace detail
@@ -955,6 +963,8 @@ rational<N>
 smallarctan(bbi::rational<N> x) noexcept
 {
     using R = rational<N>;
+    if (isnan(x))
+        return x;
     using R2 = rational<2*R::size>;
     using Z2 = typename R2::value_type;
     R2 y = x;
@@ -3360,6 +3370,8 @@ sin(rational<N> x) noexcept
     auto constexpr halfPi = Pi/two;
     auto constexpr quarterPi = halfPi/two;
     auto constexpr twoPi = two*Pi;
+    if (isnan(x))
+        return x;
     bool pneg = false;
     if (x < R{0})
     {
@@ -3416,6 +3428,8 @@ cos(rational<N> x) noexcept
     auto constexpr halfPi = Pi/two;
     auto constexpr quarterPi = halfPi/two;
     auto constexpr twoPi = two*Pi;
+    if (isnan(x))
+        return x;
     bool pneg = false;
     if (x < R{0})
         x = -x;
@@ -3497,6 +3511,8 @@ asin(rational<N> x) noexcept
 {
     using R = rational<N>;
     using V = R::value_type;
+    if (isnan(x))
+        return x;
     bool pneg = false;
     if (x < R{0})
     {
