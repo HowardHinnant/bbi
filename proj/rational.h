@@ -1,5 +1,5 @@
-#ifndef RATIONAL_H
-#define RATIONAL_H
+#ifndef BBI_RATIONAL_H
+#define BBI_RATIONAL_H
 
 #include "bbi.h"
 #include <cassert>
@@ -3714,4 +3714,4 @@ cf_string(rational<N> r)
 
 }  // namespace bbi
 
-#endif  // RATIONAL_H
+#endif  // BBI_RATIONAL_H
