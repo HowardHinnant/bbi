@@ -507,21 +507,18 @@ Policy makes no difference in behavior and there is never a failure.
 
 ### Bitwise and
 
-This operation only works when both operands have identical bbi types.  Each
-pair of bits is bitwise and\'ed into a copy and returned.  The Policy has no
-impact on the behavior of this operation.
+Each pair of bits is bitwise and\'ed into a copy and returned.  The Policy has
+no impact on the behavior of this operation.
 
 ### Bitwise or
 
-This operation only works when both operands have identical bbi types.  Each
-pair of bits is bitwise or\'ed into a copy and returned.  The Policy has no
+Each pair of bits is bitwise or\'ed into a copy and returned.  The Policy has no
 impact on the behavior of this operation.
 
 ### Bitwise exclusive or
 
-This operation only works when both operands have identical bbi types.  Each
-pair of bits is bitwise exclusive or\'ed into a copy and returned.  The Policy
-has no impact on the behavior of this operation.
+Each pair of bits is bitwise exclusive or\'ed into a copy and returned.  The
+Policy has no impact on the behavior of this operation.
 
 ## Algorithms
 

@@ -1960,6 +1960,41 @@ operator&(Z<S, N, P> const& x, Z<S, N, P> const& y) noexcept
     return r;
 }
 
+template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
+constexpr
+inline
+auto
+operator&(Z<S1, N1, P> const& x, Z<S2, N2, P> const& y) noexcept(P{} != Throw{})
+    -> std::common_type_t<decltype(x), decltype(y)>
+{
+    using X = decltype(x);
+    using Y = decltype(y);
+    using R = std::common_type_t<X, Y>;
+    return R{x} & R{y};
+}
+
+template <SignTag S, unsigned N, Policy P, detail::StandardInteger I>
+constexpr
+inline
+auto
+operator&(Z<S, N, P> const& x, I const& i) noexcept(P{} != Throw{})
+    -> std::common_type_t<decltype(x), decltype(i)>
+{
+    using X = decltype(x);
+    using R = std::common_type_t<X, I>;
+    return R{x} & R{i};
+}
+
+template <SignTag S, unsigned N, Policy P, detail::StandardInteger I>
+constexpr
+inline
+auto
+operator&(I const& i, Z<S, N, P> const& y) noexcept(P{} != Throw{})
+    -> std::common_type_t<decltype(i), decltype(y)>
+{
+    return y & i;
+}
+
 template <SignTag S, unsigned N, Policy P>
 inline
 constexpr
@@ -1980,6 +2015,41 @@ operator^(Z<S, N, P> const& x, Z<S, N, P> const& y) noexcept
     return r;
 }
 
+template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
+constexpr
+inline
+auto
+operator^(Z<S1, N1, P> const& x, Z<S2, N2, P> const& y) noexcept(P{} != Throw{})
+    -> std::common_type_t<decltype(x), decltype(y)>
+{
+    using X = decltype(x);
+    using Y = decltype(y);
+    using R = std::common_type_t<X, Y>;
+    return R{x} ^ R{y};
+}
+
+template <SignTag S, unsigned N, Policy P, detail::StandardInteger I>
+constexpr
+inline
+auto
+operator^(Z<S, N, P> const& x, I const& i) noexcept(P{} != Throw{})
+    -> std::common_type_t<decltype(x), decltype(i)>
+{
+    using X = decltype(x);
+    using R = std::common_type_t<X, I>;
+    return R{x} ^ R{i};
+}
+
+template <SignTag S, unsigned N, Policy P, detail::StandardInteger I>
+constexpr
+inline
+auto
+operator^(I const& i, Z<S, N, P> const& y) noexcept(P{} != Throw{})
+    -> std::common_type_t<decltype(i), decltype(y)>
+{
+    return y ^ i;
+}
+
 template <SignTag S, unsigned N, Policy P>
 inline
 constexpr
@@ -1998,6 +2068,41 @@ operator|(Z<S, N, P> const& x, Z<S, N, P> const& y) noexcept
         r.hi_ = x.hi_ | y.hi_;
     }
     return r;
+}
+
+template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
+constexpr
+inline
+auto
+operator|(Z<S1, N1, P> const& x, Z<S2, N2, P> const& y) noexcept(P{} != Throw{})
+    -> std::common_type_t<decltype(x), decltype(y)>
+{
+    using X = decltype(x);
+    using Y = decltype(y);
+    using R = std::common_type_t<X, Y>;
+    return R{x} | R{y};
+}
+
+template <SignTag S, unsigned N, Policy P, detail::StandardInteger I>
+constexpr
+inline
+auto
+operator|(Z<S, N, P> const& x, I const& i) noexcept(P{} != Throw{})
+    -> std::common_type_t<decltype(x), decltype(i)>
+{
+    using X = decltype(x);
+    using R = std::common_type_t<X, I>;
+    return R{x} | R{i};
+}
+
+template <SignTag S, unsigned N, Policy P, detail::StandardInteger I>
+constexpr
+inline
+auto
+operator|(I const& i, Z<S, N, P> const& y) noexcept(P{} != Throw{})
+    -> std::common_type_t<decltype(i), decltype(y)>
+{
+    return y | i;
 }
 
 // + Wrap
