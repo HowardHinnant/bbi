@@ -36,6 +36,7 @@
 #include <climits>
 #include <cstdint>
 #include <exception>
+#include <format>
 #include <iostream>
 #include <istream>
 #include <limits>
@@ -3845,5 +3846,23 @@ in_range(I i) noexcept
 }
 
 }  // namespace bbi
+
+namespace std
+{
+
+template <bbi::SignTag S, unsigned N, bbi::Policy P>
+struct formatter<bbi::Z<S, N, P>>
+    : formatter<std::string>
+{
+    template<class FmtContext>
+    auto
+    constexpr
+    format(const bbi::Z<S, N, P>& p, FmtContext& ctx) const
+    {
+        return formatter<string>::format(string(p), ctx);
+    }
+};
+
+}
 
 #endif  // BBI_H
