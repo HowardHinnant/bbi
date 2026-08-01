@@ -1714,6 +1714,26 @@ operator==(I const& x,  Z<S, N, P> const&y) noexcept
     return R{x} == R{y};
 }
 
+template <SignTag S, unsigned N, Policy P, std::floating_point F>
+constexpr
+inline
+bool
+operator==(Z<S, N, P> const& x, F const& y) noexcept
+{
+    using R = std::common_type_t<decltype(x), decltype(y)>;
+    return R{x} == R{y};
+}
+
+template <SignTag S, unsigned N, Policy P, std::floating_point F>
+constexpr
+inline
+bool
+operator==(F const& x, Z<S, N, P> const& y) noexcept
+{
+    using R = std::common_type_t<decltype(x), decltype(y)>;
+    return R{x} == R{y};
+}
+
 template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
 inline
 constexpr
@@ -1734,6 +1754,26 @@ operator!=(Z<S, N, P> const& x, I const& y) noexcept
 }
 
 template <SignTag S, unsigned N, Policy P, detail::StandardInteger I>
+constexpr
+inline
+bool
+operator!=(I const& x,  Z<S, N, P> const&y) noexcept
+{
+    using R = std::common_type_t<decltype(x), decltype(y)>;
+    return R{x} != R{y};
+}
+
+template <SignTag S, unsigned N, Policy P, std::floating_point I>
+constexpr
+inline
+bool
+operator!=(Z<S, N, P> const& x, I const& y) noexcept
+{
+    using R = std::common_type_t<decltype(x), decltype(y)>;
+    return R{x} != R{y};
+}
+
+template <SignTag S, unsigned N, Policy P, std::floating_point I>
 constexpr
 inline
 bool
@@ -1813,6 +1853,26 @@ operator<(I const& x, Z<S, N, P> const& y) noexcept
     return R{x} < R{y};
 }
 
+template <SignTag S, unsigned N, Policy P, std::floating_point I>
+constexpr
+inline
+bool
+operator<(Z<S, N, P> const& x, I const& y) noexcept
+{
+    using R = std::common_type_t<decltype(x), decltype(y)>;
+    return R{x} < R{y};
+}
+
+template <SignTag S, unsigned N, Policy P, std::floating_point I>
+constexpr
+inline
+bool
+operator<(I const& x, Z<S, N, P> const& y) noexcept
+{
+    using R = std::common_type_t<decltype(x), decltype(y)>;
+    return R{x} < R{y};
+}
+
 template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
 inline
 constexpr
@@ -1832,6 +1892,24 @@ operator>(Z<S, N, P> const& x, I const& y) noexcept
 }
 
 template <SignTag S, unsigned N, Policy P, detail::StandardInteger I>
+constexpr
+inline
+bool
+operator>(I const& x, Z<S, N, P> const& y) noexcept
+{
+    return y < x;
+}
+
+template <SignTag S, unsigned N, Policy P, std::floating_point I>
+constexpr
+inline
+bool
+operator>(Z<S, N, P> const& x, I const& y) noexcept
+{
+    return y < x;
+}
+
+template <SignTag S, unsigned N, Policy P, std::floating_point I>
 constexpr
 inline
 bool
@@ -1867,6 +1945,24 @@ operator<=( I const& x, Z<S, N, P> const& y) noexcept
     return !(y < x);
 }
 
+template <SignTag S, unsigned N, Policy P, std::floating_point I>
+inline
+constexpr
+bool
+operator<=(Z<S, N, P> const& x, I const& y) noexcept
+{
+    return !(y < x);
+}
+
+template <SignTag S, unsigned N, Policy P, std::floating_point I>
+inline
+constexpr
+bool
+operator<=( I const& x, Z<S, N, P> const& y) noexcept
+{
+    return !(y < x);
+}
+
 template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
 inline
 constexpr
@@ -1886,6 +1982,24 @@ operator>=(Z<S, N, P> const& x, I const& y) noexcept
 }
 
 template <SignTag S, unsigned N, Policy P, detail::StandardInteger I>
+inline
+constexpr
+bool
+operator>=(I const& x, Z<S, N, P> const& y) noexcept
+{
+    return !(x < y);
+}
+
+template <SignTag S, unsigned N, Policy P, std::floating_point I>
+inline
+constexpr
+bool
+operator>=(Z<S, N, P> const& x, I const& y) noexcept
+{
+    return !(x < y);
+}
+
+template <SignTag S, unsigned N, Policy P, std::floating_point I>
 inline
 constexpr
 bool
