@@ -362,7 +362,9 @@ public:
     template <std::integral I>
         constexpr explicit operator I() const noexcept {return I(rep(rep_));}
     template <std::floating_point F>
-        constexpr explicit operator F() const noexcept {return F(rep(rep_));}
+        constexpr
+//        explicit
+        operator F() const noexcept {return F(rep(rep_));}
 
     constexpr Z operator+() noexcept {return *this;}
     constexpr Z& operator++() noexcept(policy{} != Throw{})
@@ -853,7 +855,7 @@ public:
 
     template <std::floating_point F>
         constexpr
-        explicit
+//        explicit
         operator F() const noexcept
             {return F{shalf_t(hi_)}*power(F{2}, uhalf_t{size/2}) + F{lo_};}
 
