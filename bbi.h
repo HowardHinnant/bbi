@@ -107,6 +107,11 @@ template <> inline std::string to_string<std::int16_t>()  {return "int16_t";}
 template <> inline std::string to_string<std::int32_t>()  {return "int32_t";}
 template <> inline std::string to_string<std::int64_t>()  {return "int64_t";}
 
+template <std::floating_point> std::string to_string();
+template <> inline std::string to_string<float>() {return "float";}
+template <> inline std::string to_string<double>() {return "double";}
+template <> inline std::string to_string<long double>() {return "long double";}
+
 static_assert(CHAR_BIT == 8);
 
 // N must be a power of 2 that is 8 or larger.
@@ -151,6 +156,11 @@ template <SignTag S, unsigned N, Policy P, std::integral I>
 constexpr
 void
 check(Z<S, N, P>& r, I i) noexcept (P{} != Throw{});
+
+template <SignTag S, unsigned N, Policy P, std::floating_point F>
+constexpr
+void
+check(Z<S, N, P>& r, F f) noexcept (P{} != Throw{});
 
 template <SignTag S1, unsigned N1, Policy P1, SignTag S2, unsigned N2, Policy P2>
 constexpr
@@ -214,6 +224,10 @@ concept NoexceptFromI =
      ValuePreservingConversion<typename Z::sign, Z::size,
                                std::conditional_t<std::is_signed_v<I>, Signed, Unsigned>,
                                std::is_same_v<I, bool> ? 1u : sizeof(I)*CHAR_BIT>);
+
+template <class Z, class F>
+concept NoexceptFromF =
+    (typename Z::policy{} != Throw{});
 
 template <class Z1, class Z2>
 concept ExplicitFromZ =
@@ -280,6 +294,14 @@ public:
             : rep_(i)
             {detail::check(*this, i);}
 
+    template <std::floating_point F>
+        constexpr
+        explicit
+        Z(F f)
+            noexcept(detail::NoexceptFromF<Z, F>)
+            : rep_(f)
+            {detail::check(*this, f);}
+
     // Construction from other Z
 
     template <unsigned N2, Policy P2>
@@ -339,6 +361,8 @@ public:
 
     template <std::integral I>
         constexpr explicit operator I() const noexcept {return I(rep(rep_));}
+    template <std::floating_point F>
+        constexpr explicit operator F() const noexcept {return F(rep(rep_));}
 
     constexpr Z operator+() noexcept {return *this;}
     constexpr Z& operator++() noexcept(policy{} != Throw{})
@@ -398,6 +422,12 @@ private:
     constexpr
     void
     detail::check(Z<S1, N1, P1>& r, I i) noexcept (P1{} != Throw{});
+
+    template <SignTag S1, unsigned N1, Policy P1, std::floating_point F>
+    friend
+    constexpr
+    void
+    detail::check(Z<S1, N1, P1>& r, F i) noexcept (P1{} != Throw{});
 
     template <SignTag S1, unsigned N1, Policy P1, SignTag S2, unsigned N2, Policy P2>
     friend
@@ -687,6 +717,11 @@ private:
     static_assert(ProperIntSize<size>);
 };
 
+template <class Num, unsigned N, Policy P>
+constexpr
+Num
+power(Num const& f, Z<Unsigned, N, P> n);
+
 template <SignTag S, unsigned N, Policy P>
 class Z<S, N, P, false>
 {
@@ -735,6 +770,17 @@ public:
             noexcept(detail::NoexceptFromI<Z, I>)
             : lo_(i), hi_(-(i < 0))
             {detail::check(*this, i);}
+
+    template <std::floating_point F>
+        constexpr
+        explicit
+        Z(F f)
+            noexcept(detail::NoexceptFromF<Z, F>)
+            : hi_(f/power(F{2}, uhalf_t{size/2}))
+            {
+                lo_ = uhalf_t(f - power(F{hi_}, uhalf_t{size/2}));
+                detail::check(*this, f);
+            }
 
     // Construction from other Z
 
@@ -804,6 +850,12 @@ public:
         requires (size < sizeof(I)*CHAR_BIT)
         constexpr explicit operator I() const noexcept
             {return I(Z<sign, 2*size, policy>{*this});}
+
+    template <std::floating_point F>
+        constexpr
+        explicit
+        operator F() const noexcept
+            {return F{shalf_t(hi_)}*power(F{2}, uhalf_t{size/2}) + F{lo_};}
 
     constexpr Z operator+() noexcept {return *this;}
     constexpr Z& operator++() noexcept(policy{} != Throw{})
@@ -1215,6 +1267,18 @@ struct common_type<I, bbi::Z<S, N, P>>
     using type = common_type_t<bbi::Z<S, N, P>, I>;
 };
 
+template <bbi::SignTag S, unsigned N, bbi::Policy P, floating_point F>
+struct common_type<bbi::Z<S, N, P>, F>
+{
+    using type = F;
+};
+
+template <bbi::SignTag S, unsigned N, bbi::Policy P, floating_point F>
+struct common_type<F, bbi::Z<S, N, P>>
+{
+    using type = common_type_t<bbi::Z<S, N, P>, F>;
+};
+
 template <bbi::SignTag S, unsigned N, bbi::Policy P>
 class numeric_limits<bbi::Z<S, N, P>>
 {
@@ -1416,6 +1480,53 @@ check(Z<S, N, P>& r, I i) noexcept (P{} != Throw{})
                 return;
             }
         }
+    }
+}
+
+template <SignTag S, unsigned N, ErrorCheckedPolicy P, std::floating_point F>
+void
+conversion_overflowed(Z<S, N, P> const&, F const& y) noexcept (P{} != Throw{})
+{
+    using R = Z<S, N, P>;
+    auto const msg = to_string<R>() + '{' + to_string<F>() +
+                     '{' + std::to_string(y) + "}} overflowed";
+    if constexpr (P{} == Throw{})
+        throw std::overflow_error(msg);
+    else
+    {
+        std::cerr << msg << '\n';
+        std::terminate();
+    }
+}
+
+template <SignTag S, unsigned N, Policy P, std::floating_point F>
+constexpr
+void
+check(Z<S, N, P>& r, F f) noexcept (P{} != Throw{})
+{
+    if constexpr (P{} == Wrap{})
+        return;
+    if constexpr (P{} == Saturate{})
+    {
+        using R = Z<S, N, P>;
+        auto constexpr Rm = S{} == Signed{} ? std::numeric_limits<R>::min() : R{0};
+        auto constexpr RM = std::numeric_limits<R>::max();
+        auto constexpr Fm = F{Rm};
+        auto constexpr FM = F{RM};
+        if (f < Fm)
+            r = Rm;
+        else if (f > FM)
+            r = RM;
+        return;
+    }
+    if constexpr (ErrorCheckedPolicy<P>)
+    {
+        using R = Z<S, N, P>;
+        auto constexpr m = F{S{} == Signed{} ? std::numeric_limits<R>::min() : R{0}};
+        auto constexpr M = F{std::numeric_limits<R>::max()};
+        if (f < m || f > M)
+            conversion_overflowed(R{}, f);
+        return;
     }
 }
 
