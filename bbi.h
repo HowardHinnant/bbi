@@ -4205,7 +4205,7 @@ public:
 
 private:
     std::string
-    apply_locale(const std::string& num_str, const std::locale& loc) const;
+    apply_locale(std::string num_str, const std::locale& loc) const;
 
     std::string
     to_base_string(const bbi::Z<S, N, P>& value, const std::locale& loc) const;
@@ -4266,10 +4266,30 @@ std::formatter<bbi::Z<S, N, P>>::parse(std::format_parse_context& ctx)
             dynamic_width_arg_id = ctx.next_arg_id();
             ++it;
         }
+        else if (it != end && *it >= '0' && *it <= '9')
+        {
+            // Manual indexing `{:0{1}}`
+            size_t parsed_id = 0;
+            while (it != end && *it >= '0' && *it <= '9')
+            {
+                parsed_id = parsed_id * 10 + (*it - '0');
+                ++it;
+            }
+            if (it != end && *it == '}')
+            {
+                dynamic_width_arg_id = parsed_id;
+                // Inform the context tracking engine that we are using manual indices
+                ctx.check_arg_id(parsed_id); 
+                ++it; // Step past '}'
+            }
+            else
+            {
+                throw std::format_error("Missing closing bracket for dynamic width index.");
+            }
+        }
         else
         {
-            throw std::format_error("Manual indexing inside dynamic width nested brackets"
-                                    " is not supported.");
+            throw std::format_error("Invalid character inside dynamic width brackets.");
         }
     }
     else if (it != end && *it >= '1' && *it <= '9')
@@ -4291,7 +4311,8 @@ std::formatter<bbi::Z<S, N, P>>::parse(std::format_parse_context& ctx)
 
     // 7. Parse integer presentation type
     if (it != end &&
-       (*it == 'x' || *it == 'X' || *it == 'b' || *it == 'B' || *it == 'd' || *it == 'o'))
+           (*it == 'x' || *it == 'X' || *it == 'b' ||
+            *it == 'B' || *it == 'd' || *it == 'o'))
     {
         base_specifier = *it;
         upper_case = (*it == 'X' || *it == 'B');
@@ -4300,7 +4321,7 @@ std::formatter<bbi::Z<S, N, P>>::parse(std::format_parse_context& ctx)
     else if (it != end && *it != '}')
     {
         // COMPILE-TIME VALIDATION: Hard reject strings, floats, etc.
-        throw std::format_error("Invalid format specifier for MyInt128 integer type.");
+        throw std::format_error("Invalid format specifier for Z integral type.");
     }
 
     return it;
@@ -4323,6 +4344,8 @@ std::formatter<bbi::Z<S, N, P>>::format(const bbi::Z<S, N, P>& num, auto& ctx) c
             {
                 if constexpr (std::integral<std::decay_t<decltype(val)>>)
                     width = static_cast<int>(val);
+                else
+                    throw std::format_error("Invalid dynamic width type.");
             }, arg);
     }
 
@@ -4386,7 +4409,7 @@ std::formatter<bbi::Z<S, N, P>>::format(const bbi::Z<S, N, P>& num, auto& ctx) c
 // Helper: Localized digit separator application logic
 template <bbi::SignTag S, unsigned N, bbi::Policy P>
 std::string
-std::formatter<bbi::Z<S, N, P>>::apply_locale(const std::string& num_str,
+std::formatter<bbi::Z<S, N, P>>::apply_locale(std::string num_str,
                                               const std::locale& loc) const
 {
     if (!locale_aware || base_specifier != 'd')
@@ -4429,8 +4452,9 @@ std::formatter<bbi::Z<S, N, P>>::to_base_string(const bbi::Z<S, N, P>& value,
                                                 const std::locale& loc) const
 {
     bool negative = (value < 0);
-    bbi::Z<S, N, P> working_val = abs(value);
-
+    auto working_val = value;
+    if constexpr (S{} == bbi::Signed{})
+        working_val = abs(working_val);
     std::string digits_out;
     if (working_val == 0)
     {
@@ -4457,7 +4481,7 @@ std::formatter<bbi::Z<S, N, P>>::to_base_string(const bbi::Z<S, N, P>& value,
     }
 
     // Apply localization formatting safely on base digits before prefixes
-    digits_out = apply_locale(digits_out, loc);
+    digits_out = apply_locale(std::move(digits_out), loc);
 
     // Prep prefixes and signs
     std::string prefix;
