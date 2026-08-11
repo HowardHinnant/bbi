@@ -4179,22 +4179,311 @@ in_range(I i) noexcept
 
 }  // namespace bbi
 
-namespace std
-{
-
 template <bbi::SignTag S, unsigned N, bbi::Policy P>
-struct formatter<bbi::Z<S, N, P>>
-    : formatter<std::string>
+struct std::formatter<bbi::Z<S, N, P>>
 {
-    template<class FmtContext>
-    auto
+private:
+    char sign_spec                     = '-';  // '+', '-', or ' '
+    char base_specifier                = 'd';  // 'd', 'x', 'X', 'b', 'B', 'o'
+    bool show_base                     = false;
+    bool leading_zeros                 = false;
+    bool locale_aware                  = false;
+    bool upper_case                    = false;
+    int static_width                   = 0;
+    bool has_dynamic_width             = false;
+    ::std::size_t dynamic_width_arg_id = 0;
+    char align                         = '>';
+    char fill_char                     = ' ';
+
+public:
     constexpr
-    format(const bbi::Z<S, N, P>& p, FmtContext& ctx) const
-    {
-        return formatter<string>::format(string(p), ctx);
-    }
+    auto
+    parse(std::format_parse_context& ctx);
+
+    auto
+    format(const bbi::Z<S, N, P>& num, auto& ctx) const;
+
+private:
+    std::string
+    apply_locale(const std::string& num_str, const std::locale& loc) const;
+
+    std::string
+    to_base_string(const bbi::Z<S, N, P>& value, const std::locale& loc) const;
 };
 
+template <bbi::SignTag S, unsigned N, bbi::Policy P>
+constexpr
+auto
+std::formatter<bbi::Z<S, N, P>>::parse(std::format_parse_context& ctx)
+{
+    auto it = ctx.begin();
+    auto end = ctx.end();
+
+    if (it == end || *it == '}')
+        return it;
+
+    // 1. Parse fill and alignment
+    if (it + 1 != end && (*(it + 1) == '<' || *(it + 1) == '>' || *(it + 1) == '^'))
+    {
+        fill_char = *it;
+        align = *(it + 1);
+        it += 2;
+    }
+    else if (*it == '<' || *it == '>' || *it == '^')
+    {
+        align = *it;
+        ++it;
+    }
+
+    // 2. Parse sign flags
+    if (it != end && (*it == '+' || *it == '-' || *it == ' '))
+    {
+        sign_spec = *it;
+        ++it;
+    }
+
+    // 3. Parse alternate form (#)
+    if (it != end && *it == '#')
+    {
+        show_base = true;
+        ++it;
+    }
+
+    // 4. Parse zero padding flag (0)
+    if (it != end && *it == '0')
+    {
+        leading_zeros = true;
+        ++it;
+    }
+
+    // 5. Parse dynamic vs static width
+    if (it != end && *it == '{')
+    {
+        has_dynamic_width = true;
+        ++it;
+        if (it != end && *it == '}')
+        {
+            dynamic_width_arg_id = ctx.next_arg_id();
+            ++it;
+        }
+        else
+        {
+            throw std::format_error("Manual indexing inside dynamic width nested brackets"
+                                    " is not supported.");
+        }
+    }
+    else if (it != end && *it >= '1' && *it <= '9')
+    {
+        static_width = 0;
+        while (it != end && *it >= '0' && *it <= '9')
+        {
+            static_width = static_width * 10 + (*it - '0');
+            ++it;
+        }
+    }
+
+    // 6. Parse locale flag (L)
+    if (it != end && *it == 'L')
+    {
+        locale_aware = true;
+        ++it;
+    }
+
+    // 7. Parse integer presentation type
+    if (it != end &&
+       (*it == 'x' || *it == 'X' || *it == 'b' || *it == 'B' || *it == 'd' || *it == 'o'))
+    {
+        base_specifier = *it;
+        upper_case = (*it == 'X' || *it == 'B');
+        ++it;
+    }
+    else if (it != end && *it != '}')
+    {
+        // COMPILE-TIME VALIDATION: Hard reject strings, floats, etc.
+        throw std::format_error("Invalid format specifier for MyInt128 integer type.");
+    }
+
+    return it;
+}
+
+template <bbi::SignTag S, unsigned N, bbi::Policy P>
+auto
+std::formatter<bbi::Z<S, N, P>>::format(const bbi::Z<S, N, P>& num, auto& ctx) const
+{
+    // Retrieve locale from formatting context
+    std::locale loc = ctx.locale();
+    std::string converted = to_base_string(num, loc);
+
+    // Unpack runtime dynamic width if requested
+    int width = static_width;
+    if (has_dynamic_width)
+    {
+        auto arg = ctx.arg(dynamic_width_arg_id);
+        std::visit_format_arg([&width](auto&& val)
+            {
+                if constexpr (std::integral<std::decay_t<decltype(val)>>)
+                    width = static_cast<int>(val);
+            }, arg);
+    }
+
+    // Apply custom zero padding behind mathematical prefixes
+    if (leading_zeros && width > static_cast<int>(converted.length()))
+    {
+        size_t insert_pos = 0;
+        if (!converted.empty() &&
+            (converted[0] == '-' || converted[0] == '+' || converted[0] == ' '))
+        {
+            insert_pos++;
+        }
+        if (show_base && converted.length() > insert_pos + 1 &&
+            converted[insert_pos] == '0')
+        {
+            if (base_specifier == 'x' || base_specifier == 'X' ||
+                base_specifier == 'b' || base_specifier == 'B')
+            {
+                insert_pos += 2; // Inject zeros after 0x / 0b
+            }
+            else if (base_specifier == 'o')
+            {
+                insert_pos += 1; // Inject zeros after 0
+            }
+        }
+        int zeros_needed = width - converted.length();
+        if (zeros_needed > 0)
+        {
+            converted.insert(insert_pos, zeros_needed, '0');
+        }
+    }
+
+    // Handle structural alignment mapping layouts manually
+    int total_len = static_cast<int>(converted.length());
+    if (width <= total_len)
+    {
+        return std::format_to(ctx.out(), "{}", converted);
+    }
+
+    int padding_size = width - total_len;
+    if (align == '<')
+    {
+        auto out = std::format_to(ctx.out(), "{}", converted);
+        return std::fill_n(out, padding_size, fill_char);
+    }
+    else if (align == '^')
+    {
+        int left_padding = padding_size / 2;
+        int right_padding = padding_size - left_padding;
+        auto out = std::fill_n(ctx.out(), left_padding, fill_char);
+        out = std::format_to(out, "{}", converted);
+        return std::fill_n(out, right_padding, fill_char);
+    }
+    else
+    {
+        auto out = std::fill_n(ctx.out(), padding_size, fill_char);
+        return std::format_to(out, "{}", converted);
+    }
+}
+
+// Helper: Localized digit separator application logic
+template <bbi::SignTag S, unsigned N, bbi::Policy P>
+std::string
+std::formatter<bbi::Z<S, N, P>>::apply_locale(const std::string& num_str,
+                                              const std::locale& loc) const
+{
+    if (!locale_aware || base_specifier != 'd')
+        return num_str;
+
+    auto& numpunct = std::use_facet<std::numpunct<char>>(loc);
+    std::string grouping = numpunct.grouping();
+    if (grouping.empty())
+        return num_str;
+
+    char sep = numpunct.thousands_sep();
+    std::string result;
+    int group_idx = 0;
+    int curr_group_limit = grouping[group_idx];
+    int count = 0;
+
+    // Apply thousands separators from right to left
+    for (auto rit = num_str.rbegin(); rit != num_str.rend(); ++rit)
+    {
+        if (count == curr_group_limit && std::isdigit(*rit))
+        {
+            result.push_back(sep);
+            count = 0;
+            if (group_idx + 1 < grouping.size())
+            {
+                curr_group_limit = grouping[++group_idx];
+            }
+        }
+        result.push_back(*rit);
+        if (std::isdigit(*rit))
+            count++;
+    }
+    std::reverse(result.begin(), result.end());
+    return result;
+}
+
+template <bbi::SignTag S, unsigned N, bbi::Policy P>
+std::string
+std::formatter<bbi::Z<S, N, P>>::to_base_string(const bbi::Z<S, N, P>& value,
+                                                const std::locale& loc) const
+{
+    bool negative = (value < 0);
+    bbi::Z<S, N, P> working_val = abs(value);
+
+    std::string digits_out;
+    if (working_val == 0)
+    {
+        digits_out = "0";
+    }
+    else
+    {
+        uint32_t base = 10;
+        const char* digits = upper_case ? "0123456789ABCDEF" : "0123456789abcdef";
+        if (base_specifier == 'x' || base_specifier == 'X')
+            base = 16;
+        else if (base_specifier == 'b' || base_specifier == 'B')
+            base = 2;
+        else if (base_specifier == 'o')
+            base = 8;
+
+        while (working_val != 0)
+        {
+            uint32_t rem{working_val % base};
+            digits_out.push_back(digits[rem]);
+            working_val /= base;
+        }
+        std::reverse(digits_out.begin(), digits_out.end());
+    }
+
+    // Apply localization formatting safely on base digits before prefixes
+    digits_out = apply_locale(digits_out, loc);
+
+    // Prep prefixes and signs
+    std::string prefix;
+    if (negative) {
+        prefix = "-";
+    }
+    else if (sign_spec == '+')
+    {
+        prefix = "+";
+    }
+    else if (sign_spec == ' ')
+    {
+        prefix = " ";
+    }
+
+    if (show_base)
+    {
+        if (base_specifier == 'x' || base_specifier == 'X')
+            prefix += upper_case ? "0X" : "0x";
+        else if (base_specifier == 'b' || base_specifier == 'B')
+            prefix += upper_case ? "0B" : "0b";
+        else if (base_specifier == 'o')
+            prefix += "0";
+    }
+
+    return prefix + digits_out;
 }
 
 #endif  // BBI_H
