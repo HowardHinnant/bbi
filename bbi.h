@@ -4270,10 +4270,15 @@ std::formatter<bbi::Z<S, N, P>>::parse(std::format_parse_context& ctx)
         {
             // Manual indexing `{:0{1}}`
             size_t parsed_id = 0;
+            unsigned digit_count = 0;
+            unsigned constexpr digit_count_limit = 3;
             while (it != end && *it >= '0' && *it <= '9')
             {
                 parsed_id = parsed_id * 10 + (*it - '0');
                 ++it;
+                if (++digit_count > digit_count_limit)
+                    throw std::format_error("Index for width argument has"
+                                            " too many digits");
             }
             if (it != end && *it == '}')
             {
@@ -4295,10 +4300,14 @@ std::formatter<bbi::Z<S, N, P>>::parse(std::format_parse_context& ctx)
     else if (it != end && *it >= '1' && *it <= '9')
     {
         static_width = 0;
+        unsigned digit_count = 0;
+        unsigned constexpr digit_count_limit = 4;
         while (it != end && *it >= '0' && *it <= '9')
         {
             static_width = static_width * 10 + (*it - '0');
             ++it;
+            if (++digit_count > digit_count_limit)
+                throw std::format_error("Width field has too many digits");
         }
     }
 
@@ -4347,6 +4356,10 @@ std::formatter<bbi::Z<S, N, P>>::format(const bbi::Z<S, N, P>& num, auto& ctx) c
                 else
                     throw std::format_error("Invalid dynamic width type.");
             }, arg);
+        if (width < 0)
+            throw std::format_error("Invalid negative dynamic width value.");
+        if (width > 9999)
+            throw std::format_error("Invalid large dynamic width value.");
     }
 
     // Apply custom zero padding behind mathematical prefixes
