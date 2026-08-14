@@ -177,11 +177,6 @@ constexpr
 Z<Signed, 2*N, Wrap>
 mul2(Z<Signed, N, Wrap> const& x, Z<Signed, N, Wrap> const& y) noexcept;
 
-template <unsigned N1>
-requires (N1 > Nlimit)
-void
-push_digits(std::string& r, Z<Unsigned, N1, Wrap>& x);
-
 template <unsigned N>
 requires(N <= Nlimit)
 constexpr
@@ -251,7 +246,6 @@ concept isZ = isz<T>::value;
 }  // namespace detail
 
 template <SignTag S, unsigned N, Policy P>
-requires (N <= Nlimit)
 std::string
 to_string(Z<S, N, P> const& x);
 
@@ -635,12 +629,6 @@ private:
     constexpr
     unsigned
     detail::divu10(Z<Unsigned, N2, Wrap>& u) noexcept;
-
-    template <SignTag S1, unsigned N1, Policy P1>
-    requires (N1 <= Nlimit)
-    friend
-    std::string
-    to_string(Z<S1, N1, P1> const& x);
 
     // Precondition:  0 <= n < N
     constexpr Z left_shift(unsigned n) const noexcept
@@ -1111,18 +1099,6 @@ private:
     constexpr
     unsigned
     popcount(Z<Unsigned, N2, P2> const& x) noexcept;
-
-    template <unsigned N1>
-    requires (N1 > Nlimit)
-    friend
-    void
-    detail::push_digits(std::string& r, Z<Unsigned, N1, Wrap>& x);
-
-    template <SignTag S1, unsigned N1, Policy P1>
-    requires (N1 > Nlimit)
-    friend
-    std::string
-    to_string(Z<S1, N1, P1> const& x);
 
     // Precondition:  0 <= n < N
     constexpr Z left_shift(unsigned n) const noexcept
@@ -3367,92 +3343,39 @@ divu10(Z<Unsigned, N, Wrap>& u) noexcept
 }
 
 template <unsigned N>
-requires (N <= Nlimit)
+constexpr
 inline
-void
-push_digits(std::string& r, Z<Unsigned, N, Wrap>& x)
+unsigned
+divu16(Z<Unsigned, N, Wrap>& u) noexcept
 {
-    while (x)
-        r.push_back(static_cast<char>(divu10(x) + '0'));
+    unsigned r(u & 0xFu);
+    u >>= 4;
+    return r;
 }
 
 template <unsigned N>
-requires (N > Nlimit)
+constexpr
 inline
-void
-push_digits(std::string& r, Z<Unsigned, N, Wrap>& x)
+unsigned
+divu8(Z<Unsigned, N, Wrap>& u) noexcept
 {
-    while (x.hi_)
-        r.push_back(static_cast<char>(divu10(x) + '0'));
-    push_digits(r, x.lo_);
+    unsigned r(u & 0x7u);
+    u >>= 3;
+    return r;
+}
+
+template <unsigned N>
+constexpr
+inline
+unsigned
+divu2(Z<Unsigned, N, Wrap>& u) noexcept
+{
+    unsigned r(u & 0x1u);
+    u >>= 1;
+    return r;
 }
 
 }  // namespace detail
-
-template <SignTag S, unsigned N, Policy P>
-requires (N <= Nlimit)
-std::string
-to_string(Z<S, N, P> const& x)
-{
-    std::string r;
-    bool const neg = x.is_neg();
-    using UW = Z<Unsigned, N, Wrap>;
-    UW xu{neg ? -UW{x} : UW{x}};
-    if (neg)
-        r.push_back('-');
-    do
-    {
-        r.push_back(static_cast<char>(detail::divu10(xu) + '0'));
-    } while (xu);
-    std::reverse(r.begin() + neg, r.end());
-    return r;
-}
-
-template <SignTag S, unsigned N, Policy P>
-requires (N > Nlimit)
-std::string
-to_string(Z<S, N, P> const& x)
-{
-    std::string r;
-    bool const neg = x.is_neg();
-    using UW = Z<Unsigned, N, Wrap>;
-    UW xu{neg ? -UW{x} : UW{x}};
-    if (neg)
-        r.push_back('-');
-    do
-    {
-        r.push_back(static_cast<char>(detail::divu10(xu) + '0'));
-    } while (xu.hi_);
-    detail::push_digits(r, xu.lo_);
-    std::reverse(r.begin() + neg, r.end());
-    return r;
-}
-
-template <SignTag S, unsigned N, Policy P>
-std::string
-to_string_hex(Z<S, N, P> const& x)
-{
-    Z<Unsigned, N, Wrap> xu{x};
-    std::string r;
-    Z<Unsigned, N, Wrap> mask{0xF};
-    mask <<= N-4;
-    for (auto i = 0; i < N/4; ++i)
-    {
-        auto j = unsigned((xu & mask) >> (N-4 - 4*i));
-        auto c = j < 10 ? char(j + '0') : char(j - 10 + 'a');
-        r.push_back(c);
-        mask >>= 4;
-    }
-    return r;
-}
-
-template <SignTag S, unsigned N, Policy P>
-inline
-std::ostream&
-operator<<(std::ostream& os, Z<S, N, P> const& x)
-{
-    return os << to_string(x);
-}
 
 template <SignTag S, unsigned N, Policy P>
 std::istream&
@@ -4179,6 +4102,17 @@ in_range(I i) noexcept
 
 }  // namespace bbi
 
+// {[:[[fill]align][sign][#][0][width][L][type]]}
+//
+// fill is any single character other than '{' or '}'.  Defaults to ' '
+// align is one of '<' '>' '^' (left, right or center).  Defaults to '>'
+// sign is one of '+' '-' ' '.  Defaults to '-'.  First part of prefix
+// # if present adds b/B 0 or 0x/0X to prefix
+// 0 if present, pads with leading '0' between prefix and value
+// width is up to 4 decimal digits, specifying total width
+// L will localize with supplied locale, or global locale if not supplied.
+//    Lack of L localizes with "C" locale
+// type is one of 'b' 'B' 'd' 'o' 'x' 'X' (binary, decimal, octal, hex, lower/upper case
 template <bbi::SignTag S, unsigned N, bbi::Policy P>
 struct std::formatter<bbi::Z<S, N, P>>
 {
@@ -4201,14 +4135,14 @@ public:
     parse(std::format_parse_context& ctx);
 
     auto
-    format(const bbi::Z<S, N, P>& num, auto& ctx) const;
+    format(bbi::Z<S, N, P> const& num, auto& ctx) const;
 
 private:
     std::string
-    apply_locale(std::string num_str, const std::locale& loc) const;
+    apply_locale(std::string num_str, std::locale const & loc) const;
 
     std::string
-    to_base_string(const bbi::Z<S, N, P>& value, const std::locale& loc) const;
+    to_base_string(bbi::Z<S, N, P> const& value, std::locale const& loc) const;
 };
 
 template <bbi::SignTag S, unsigned N, bbi::Policy P>
@@ -4338,7 +4272,7 @@ std::formatter<bbi::Z<S, N, P>>::parse(std::format_parse_context& ctx)
 
 template <bbi::SignTag S, unsigned N, bbi::Policy P>
 auto
-std::formatter<bbi::Z<S, N, P>>::format(const bbi::Z<S, N, P>& num, auto& ctx) const
+std::formatter<bbi::Z<S, N, P>>::format(bbi::Z<S, N, P> const& num, auto& ctx) const
 {
     // Retrieve locale from formatting context
     std::locale loc = ctx.locale();
@@ -4423,7 +4357,7 @@ std::formatter<bbi::Z<S, N, P>>::format(const bbi::Z<S, N, P>& num, auto& ctx) c
 template <bbi::SignTag S, unsigned N, bbi::Policy P>
 std::string
 std::formatter<bbi::Z<S, N, P>>::apply_locale(std::string num_str,
-                                              const std::locale& loc) const
+                                              std::locale const& loc) const
 {
     if (!locale_aware || base_specifier != 'd')
         return num_str;
@@ -4435,7 +4369,7 @@ std::formatter<bbi::Z<S, N, P>>::apply_locale(std::string num_str,
 
     char sep = numpunct.thousands_sep();
     std::string result;
-    int group_idx = 0;
+    unsigned group_idx = 0;
     int curr_group_limit = grouping[group_idx];
     int count = 0;
 
@@ -4461,66 +4395,84 @@ std::formatter<bbi::Z<S, N, P>>::apply_locale(std::string num_str,
 
 template <bbi::SignTag S, unsigned N, bbi::Policy P>
 std::string
-std::formatter<bbi::Z<S, N, P>>::to_base_string(const bbi::Z<S, N, P>& value,
-                                                const std::locale& loc) const
+std::formatter<bbi::Z<S, N, P>>::to_base_string(bbi::Z<S, N, P> const& xvalue,
+                                                std::locale const& loc) const
 {
-    bool negative = (value < 0);
-    auto working_val = value;
-    if constexpr (S{} == bbi::Signed{})
-        working_val = abs(working_val);
-    std::string digits_out;
-    if (working_val == 0)
-    {
-        digits_out = "0";
-    }
-    else
-    {
-        uint32_t base = 10;
-        const char* digits = upper_case ? "0123456789ABCDEF" : "0123456789abcdef";
-        if (base_specifier == 'x' || base_specifier == 'X')
-            base = 16;
-        else if (base_specifier == 'b' || base_specifier == 'B')
-            base = 2;
-        else if (base_specifier == 'o')
-            base = 8;
+    bool negative = false;
 
-        while (working_val != 0)
-        {
-            uint32_t rem{working_val % base};
-            digits_out.push_back(digits[rem]);
-            working_val /= base;
-        }
-        std::reverse(digits_out.begin(), digits_out.end());
+    bbi::Z<S, N, bbi::Wrap> value{xvalue};
+    if (value < 0)
+    {
+        negative = true;
+        value = -value;
     }
-
-    // Apply localization formatting safely on base digits before prefixes
-    digits_out = apply_locale(std::move(digits_out), loc);
 
     // Prep prefixes and signs
     std::string prefix;
-    if (negative) {
+    if (negative)
         prefix = "-";
-    }
     else if (sign_spec == '+')
-    {
         prefix = "+";
-    }
     else if (sign_spec == ' ')
-    {
         prefix = " ";
-    }
 
-    if (show_base)
+    bbi::Z<bbi::Unsigned, N, bbi::Wrap> working_val{value};
+    std::string digits_out;
+    const char* const digits = upper_case ? "0123456789ABCDEF" : "0123456789abcdef";
+    if (base_specifier == 'x' || base_specifier == 'X')
     {
-        if (base_specifier == 'x' || base_specifier == 'X')
+        if (show_base)
             prefix += upper_case ? "0X" : "0x";
-        else if (base_specifier == 'b' || base_specifier == 'B')
-            prefix += upper_case ? "0B" : "0b";
-        else if (base_specifier == 'o')
-            prefix += "0";
+        do
+            digits_out.push_back(digits[bbi::detail::divu16(working_val)]);
+        while (working_val);
     }
+    else if (base_specifier == 'b' || base_specifier == 'B')
+    {
+        if (show_base)
+            prefix += upper_case ? "0B" : "0b";
+        do
+            digits_out.push_back(digits[bbi::detail::divu2(working_val)]);
+        while (working_val);
+    }
+    else if (base_specifier == 'o')
+    {
+        if (show_base)
+            prefix += "0";
+        do
+            digits_out.push_back(digits[bbi::detail::divu8(working_val)]);
+        while (working_val);
+    }
+    else
+    {
+        do
+            digits_out.push_back(digits[bbi::detail::divu10(working_val)]);
+        while (working_val);
+    }
+    std::reverse(digits_out.begin(), digits_out.end());
 
-    return prefix + digits_out;
+    // Apply localization formatting safely on base digits before prefix
+    return prefix + apply_locale(std::move(digits_out), loc);
 }
+
+namespace bbi
+{
+
+template <SignTag S, unsigned N, Policy P>
+inline
+std::ostream&
+operator<<(std::ostream& os, Z<S, N, P> const& x)
+{
+    return os << std::format("{}", x);
+}
+
+template <SignTag S, unsigned N, Policy P>
+std::string
+to_string(Z<S, N, P> const& x)
+{
+    return std::format("{}", x);
+}
+
+}  // namespace bbi;
 
 #endif  // BBI_H
