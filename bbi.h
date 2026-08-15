@@ -4109,9 +4109,11 @@ in_range(I i) noexcept
 // sign is one of '+' '-' ' '.  Defaults to '-'.  First part of prefix
 // # if present adds b/B 0 or 0x/0X to prefix
 // 0 if present, pads with leading '0' between prefix and value
-// width is up to 4 decimal digits, specifying total width
+// width is up to 4 decimal digits, specifying total width, or
+//     is {iii}, where iii represents up to 3 decimal digits of an index to an
+//     argument that has no more than 4 decimal digits.
 // L will localize with supplied locale, or global locale if not supplied.
-//    Lack of L localizes with "C" locale
+//     Lack of L localizes with "C" locale
 // type is one of 'b' 'B' 'd' 'o' 'x' 'X' (binary, decimal, octal, hex, lower/upper case
 template <bbi::SignTag S, unsigned N, bbi::Policy P>
 struct std::formatter<bbi::Z<S, N, P>>
@@ -4126,7 +4128,7 @@ private:
     int static_width                   = 0;
     bool has_dynamic_width             = false;
     ::std::size_t dynamic_width_arg_id = 0;
-    char align                         = '>';
+    char align                         = '>';  // '<', '>', '^'
     char fill_char                     = ' ';
 
 public:
