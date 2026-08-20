@@ -55,6 +55,10 @@ namespace bbi
 #  define BBI_LIMIT 64
 #endif
 
+#ifndef BBI_FLOAT_CONVERT
+#  define BBI_FLOAT_CONVERT 0
+#endif
+
 unsigned constexpr Nlimit = BBI_LIMIT;
 
 struct Signed{ explicit Signed() = default; };
@@ -157,10 +161,14 @@ constexpr
 void
 check(Z<S, N, P>& r, I i) noexcept (P{} != Throw{});
 
+#if BBI_FLOAT_CONVERT
+
 template <SignTag S, unsigned N, Policy P, std::floating_point F>
 constexpr
 void
 check(Z<S, N, P>& r, F f) noexcept (P{} != Throw{});
+
+#endif  // BBI_FLOAT_CONVERT
 
 template <SignTag S1, unsigned N1, Policy P1, SignTag S2, unsigned N2, Policy P2>
 constexpr
@@ -220,9 +228,13 @@ concept NoexceptFromI =
                                std::conditional_t<std::is_signed_v<I>, Signed, Unsigned>,
                                std::is_same_v<I, bool> ? 1u : sizeof(I)*CHAR_BIT>);
 
+#if BBI_FLOAT_CONVERT
+
 template <class Z, class F>
 concept NoexceptFromF =
     (typename Z::policy{} != Throw{});
+
+#endif  // BBI_FLOAT_CONVERT
 
 template <class Z1, class Z2>
 concept ExplicitFromZ =
@@ -288,6 +300,7 @@ public:
             : rep_(i)
             {detail::check(*this, i);}
 
+#if BBI_FLOAT_CONVERT
     template <std::floating_point F>
         constexpr
         explicit
@@ -295,6 +308,7 @@ public:
             noexcept(detail::NoexceptFromF<Z, F>)
             : rep_(f)
             {detail::check(*this, f);}
+#endif  // BBI_FLOAT_CONVERT
 
     // Construction from other Z
 
@@ -355,10 +369,11 @@ public:
 
     template <std::integral I>
         constexpr explicit operator I() const noexcept {return I(rep(rep_));}
+#if BBI_FLOAT_CONVERT
     template <std::floating_point F>
         constexpr
-//        explicit
         operator F() const noexcept {return F(rep(rep_));}
+#endif  // BBI_FLOAT_CONVERT
 
     constexpr Z operator+() noexcept {return *this;}
     constexpr Z& operator++() noexcept(policy{} != Throw{})
@@ -419,11 +434,13 @@ private:
     void
     detail::check(Z<S1, N1, P1>& r, I i) noexcept (P1{} != Throw{});
 
+#if BBI_FLOAT_CONVERT
     template <SignTag S1, unsigned N1, Policy P1, std::floating_point F>
     friend
     constexpr
     void
     detail::check(Z<S1, N1, P1>& r, F i) noexcept (P1{} != Throw{});
+#endif  // BBI_FLOAT_CONVERT
 
     template <SignTag S1, unsigned N1, Policy P1, SignTag S2, unsigned N2, Policy P2>
     friend
@@ -761,6 +778,7 @@ public:
             : lo_(i), hi_(-(i < 0))
             {detail::check(*this, i);}
 
+#if BBI_FLOAT_CONVERT
     template <std::floating_point F>
         constexpr
         explicit
@@ -771,6 +789,7 @@ public:
                 lo_ = uhalf_t(f - power(F{hi_}, uhalf_t{size/2}));
                 detail::check(*this, f);
             }
+#endif  // BBI_FLOAT_CONVERT
 
     // Construction from other Z
 
@@ -841,11 +860,12 @@ public:
         constexpr explicit operator I() const noexcept
             {return I(Z<sign, 2*size, policy>{*this});}
 
+#if BBI_FLOAT_CONVERT
     template <std::floating_point F>
         constexpr
-//        explicit
         operator F() const noexcept
             {return F{shalf_t(hi_)}*power(F{2}, uhalf_t{size/2}) + F{lo_};}
+#endif  // BBI_FLOAT_CONVERT
 
     constexpr Z operator+() noexcept {return *this;}
     constexpr Z& operator++() noexcept(policy{} != Throw{})
@@ -1245,6 +1265,7 @@ struct common_type<I, bbi::Z<S, N, P>>
     using type = common_type_t<bbi::Z<S, N, P>, I>;
 };
 
+#if BBI_FLOAT_CONVERT
 template <bbi::SignTag S, unsigned N, bbi::Policy P, floating_point F>
 struct common_type<bbi::Z<S, N, P>, F>
 {
@@ -1256,6 +1277,7 @@ struct common_type<F, bbi::Z<S, N, P>>
 {
     using type = common_type_t<bbi::Z<S, N, P>, F>;
 };
+#endif  // BBI_FLOAT_CONVERT
 
 template <bbi::SignTag S, unsigned N, bbi::Policy P>
 class numeric_limits<bbi::Z<S, N, P>>
@@ -1461,6 +1483,8 @@ check(Z<S, N, P>& r, I i) noexcept (P{} != Throw{})
     }
 }
 
+#if BBI_FLOAT_CONVERT
+
 template <SignTag S, unsigned N, ErrorCheckedPolicy P, std::floating_point F>
 void
 conversion_overflowed(Z<S, N, P> const&, F const& y) noexcept (P{} != Throw{})
@@ -1507,6 +1531,8 @@ check(Z<S, N, P>& r, F f) noexcept (P{} != Throw{})
         return;
     }
 }
+
+#endif  // BBI_FLOAT_CONVERT
 
 template <SignTag S1, unsigned N1, ErrorCheckedPolicy P1,
           SignTag S2, unsigned N2, Policy P2>
@@ -1692,6 +1718,8 @@ operator==(I const& x,  Z<S, N, P> const&y) noexcept
     return R{x} == R{y};
 }
 
+#if BBI_FLOAT_CONVERT
+
 template <SignTag S, unsigned N, Policy P, std::floating_point F>
 constexpr
 inline
@@ -1711,6 +1739,8 @@ operator==(F const& x, Z<S, N, P> const& y) noexcept
     using R = std::common_type_t<decltype(x), decltype(y)>;
     return R{x} == R{y};
 }
+
+#endif  // BBI_FLOAT_CONVERT
 
 template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
 inline
@@ -1741,6 +1771,8 @@ operator!=(I const& x,  Z<S, N, P> const&y) noexcept
     return R{x} != R{y};
 }
 
+#if BBI_FLOAT_CONVERT
+
 template <SignTag S, unsigned N, Policy P, std::floating_point I>
 constexpr
 inline
@@ -1760,6 +1792,8 @@ operator!=(I const& x,  Z<S, N, P> const&y) noexcept
     using R = std::common_type_t<decltype(x), decltype(y)>;
     return R{x} != R{y};
 }
+
+#endif  // BBI_FLOAT_CONVERT
 
 template <SignTag S, unsigned N, Policy P>
 inline
@@ -1831,6 +1865,8 @@ operator<(I const& x, Z<S, N, P> const& y) noexcept
     return R{x} < R{y};
 }
 
+#if BBI_FLOAT_CONVERT
+
 template <SignTag S, unsigned N, Policy P, std::floating_point I>
 constexpr
 inline
@@ -1850,6 +1886,8 @@ operator<(I const& x, Z<S, N, P> const& y) noexcept
     using R = std::common_type_t<decltype(x), decltype(y)>;
     return R{x} < R{y};
 }
+
+#endif  // BBI_FLOAT_CONVERT
 
 template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
 inline
@@ -1878,6 +1916,8 @@ operator>(I const& x, Z<S, N, P> const& y) noexcept
     return y < x;
 }
 
+#if BBI_FLOAT_CONVERT
+
 template <SignTag S, unsigned N, Policy P, std::floating_point I>
 constexpr
 inline
@@ -1895,6 +1935,8 @@ operator>(I const& x, Z<S, N, P> const& y) noexcept
 {
     return y < x;
 }
+
+#endif  // BBI_FLOAT_CONVERT
 
 template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
 inline
@@ -1923,6 +1965,8 @@ operator<=( I const& x, Z<S, N, P> const& y) noexcept
     return !(y < x);
 }
 
+#if BBI_FLOAT_CONVERT
+
 template <SignTag S, unsigned N, Policy P, std::floating_point I>
 inline
 constexpr
@@ -1940,6 +1984,8 @@ operator<=( I const& x, Z<S, N, P> const& y) noexcept
 {
     return !(y < x);
 }
+
+#endif  // BBI_FLOAT_CONVERT
 
 template <SignTag S1, unsigned N1, Policy P, SignTag S2, unsigned N2>
 inline
@@ -1968,6 +2014,8 @@ operator>=(I const& x, Z<S, N, P> const& y) noexcept
     return !(x < y);
 }
 
+#if BBI_FLOAT_CONVERT
+
 template <SignTag S, unsigned N, Policy P, std::floating_point I>
 inline
 constexpr
@@ -1985,6 +2033,8 @@ operator>=(I const& x, Z<S, N, P> const& y) noexcept
 {
     return !(x < y);
 }
+
+#endif  // BBI_FLOAT_CONVERT
 
 template <SignTag S, unsigned N>
 inline
@@ -4119,17 +4169,17 @@ template <bbi::SignTag S, unsigned N, bbi::Policy P>
 struct std::formatter<bbi::Z<S, N, P>>
 {
 private:
-    char sign_spec                     = '-';  // '+', '-', or ' '
-    char base_specifier                = 'd';  // 'd', 'x', 'X', 'b', 'B', 'o'
-    bool show_base                     = false;
-    bool leading_zeros                 = false;
-    bool locale_aware                  = false;
-    bool upper_case                    = false;
-    int static_width                   = 0;
-    bool has_dynamic_width             = false;
-    ::std::size_t dynamic_width_arg_id = 0;
-    char align                         = '>';  // '<', '>', '^'
-    char fill_char                     = ' ';
+    char sign_spec                   = '-';  // '+', '-', or ' '
+    char base_specifier              = 'd';  // 'd', 'x', 'X', 'b', 'B', 'o'
+    bool show_base                   = false;
+    bool leading_zeros               = false;
+    bool locale_aware                = false;
+    bool upper_case                  = false;
+    int static_width                 = 0;
+    bool has_dynamic_width           = false;
+    std::size_t dynamic_width_arg_id = 0;
+    char align                       = '>';  // '<', '>', '^'
+    char fill_char                   = ' ';
 
 public:
     constexpr
