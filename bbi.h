@@ -34,6 +34,7 @@
 #include <cassert>
 #include <charconv>
 #include <climits>
+#include <concepts>
 #include <cstdint>
 #include <exception>
 #include <format>
