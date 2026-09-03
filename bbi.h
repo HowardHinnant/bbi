@@ -4210,10 +4210,10 @@ std::formatter<bbi::Z<S, N, P>>::parse(std::format_parse_context& ctx)
         return it;
 
     // 1. Parse fill and alignment
-    if (it + 1 != end && (*(it + 1) == '<' || *(it + 1) == '>' || *(it + 1) == '^'))
+    if (it + 1 != end && (it[1] == '<' || it[1] == '>' || it[1] == '^'))
     {
         fill_char = *it;
-        align = *(it + 1);
+        align = it[1];
         it += 2;
     }
     else if (*it == '<' || *it == '>' || *it == '^')
